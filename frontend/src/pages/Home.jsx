@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Package, Store, Truck, CheckCircle, TrendingUp, Shield, Zap, Star, Users, Globe } from 'lucide-react';
+import { ArrowRight, Package, Store, Truck, CheckCircle, TrendingUp, Shield, Zap, Star, Users, Globe, LayoutDashboard } from 'lucide-react';
 import { useLang } from '../context/LangContext';
+import { useAuth } from '../context/AuthContext';
 
 const CATEGORIES = [
   { icon: '🍞', en: 'Food & Beverages', ar: 'مواد غذائية' },
@@ -81,6 +82,11 @@ function MockupCard() {
 
 export default function Home() {
   const { t, lang } = useLang();
+  const { user } = useAuth();
+
+  const dashPath = user
+    ? { wholesaler: '/dashboard/wholesaler', retailer: '/dashboard/retailer', admin: '/dashboard/admin', driver: '/dashboard/delivery' }[user.role]
+    : null;
 
   return (
     <div>
@@ -113,13 +119,23 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  to="/register"
-                  className="inline-flex items-center justify-center gap-2.5 bg-primary-500 hover:bg-primary-400 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 active:scale-95 text-base"
-                >
-                  {t.getStarted}
-                  <ArrowRight size={18} className={lang === 'ar' ? 'rotate-180' : ''} />
-                </Link>
+                {user && dashPath ? (
+                  <Link
+                    to={dashPath}
+                    className="inline-flex items-center justify-center gap-2.5 bg-primary-500 hover:bg-primary-400 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 active:scale-95 text-base"
+                  >
+                    <LayoutDashboard size={18} />
+                    {lang === 'ar' ? 'لوحة التحكم' : 'Go to Dashboard'}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center justify-center gap-2.5 bg-primary-500 hover:bg-primary-400 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 active:scale-95 text-base"
+                  >
+                    {t.getStarted}
+                    <ArrowRight size={18} className={lang === 'ar' ? 'rotate-180' : ''} />
+                  </Link>
+                )}
                 <Link
                   to="/catalog"
                   className="inline-flex items-center justify-center gap-2 border border-white/20 text-white/80 hover:text-white hover:border-white/40 font-semibold px-8 py-4 rounded-2xl hover:bg-white/5 transition-all text-base"
@@ -345,18 +361,38 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 bg-primary-500/15 border border-primary-500/25 rounded-full px-4 py-2 text-sm font-medium text-primary-300 mb-6">
               <Users size={14} /> {lang === 'ar' ? 'انضم إلى آلاف التجار' : 'Join thousands of merchants'}
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {lang === 'ar' ? 'انضم إلى سلاعلي اليوم' : 'Start Trading Smarter Today'}
-            </h2>
-            <p className="text-white/50 mb-8 text-base">
-              {lang === 'ar' ? 'سجّل مجاناً وابدأ التجارة مع أفضل الموردين في الجزائر.' : 'Free to join. Connect with Algeria\'s top wholesale suppliers instantly.'}
-            </p>
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-2.5 bg-primary-500 hover:bg-primary-400 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 active:scale-95"
-            >
-              {t.getStarted} <ArrowRight size={18} className={lang === 'ar' ? 'rotate-180' : ''} />
-            </Link>
+            {user && dashPath ? (
+              <>
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  {lang === 'ar' ? `مرحباً، ${user.name}` : `Welcome back, ${user.name}`}
+                </h2>
+                <p className="text-white/50 mb-8 text-base">
+                  {lang === 'ar' ? 'تابع من حيث توقفت.' : 'Pick up right where you left off.'}
+                </p>
+                <Link
+                  to={dashPath}
+                  className="inline-flex items-center gap-2.5 bg-primary-500 hover:bg-primary-400 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 active:scale-95"
+                >
+                  <LayoutDashboard size={18} />
+                  {lang === 'ar' ? 'لوحة التحكم' : 'Go to Dashboard'}
+                </Link>
+              </>
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  {lang === 'ar' ? 'انضم إلى سلاعلي اليوم' : 'Start Trading Smarter Today'}
+                </h2>
+                <p className="text-white/50 mb-8 text-base">
+                  {lang === 'ar' ? 'سجّل مجاناً وابدأ التجارة مع أفضل الموردين في الجزائر.' : 'Free to join. Connect with Algeria\'s top wholesale suppliers instantly.'}
+                </p>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center gap-2.5 bg-primary-500 hover:bg-primary-400 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 active:scale-95"
+                >
+                  {t.getStarted} <ArrowRight size={18} className={lang === 'ar' ? 'rotate-180' : ''} />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
