@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body { @apply bg-slate-50 text-slate-800; }
+  [dir="rtl"] { font-family: 'Cairo', system-ui, sans-serif; }
+  [dir="ltr"] { font-family: 'Inter', system-ui, sans-serif; }
+}
+
+@layer components {
+  /* ── Buttons ── */
+  .btn-primary   { @apply bg-primary-600 hover:bg-primary-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95; }
+  .btn-navy      { @apply bg-navy-800 hover:bg-navy-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95; }
+  .btn-secondary { @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm; }
+  .btn-danger    { @apply bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200; }
+  .btn-ghost     { @apply hover:bg-white/10 text-white/80 hover:text-white font-medium px-4 py-2 rounded-xl transition-all duration-200; }
+  .btn-ghost-dark { @apply hover:bg-slate-100 text-slate-600 font-medium px-4 py-2 rounded-xl transition-all duration-200; }
+
+  /* ── Cards ── */
+  .card       { @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6; }
+  .card-hover { @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer; }
+  .card-glass { @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6; }
+  .card-dark  { @apply bg-navy-900/80 backdrop-blur-md border border-white/10 rounded-2xl p-6; }
+
+  /* ── Form ── */
+  .input { @apply w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-white transition-all; }
+  .input-dark { @apply w-full border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white/5 text-white placeholder-white/40 transition-all; }
+  .label { @apply block text-sm font-medium text-slate-700 mb-1.5; }
+
+  /* ── Badges ── */
+  .badge        { @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold; }
+  .badge-green  { @apply badge bg-primary-100 text-primary-700; }
+  .badge-yellow { @apply badge bg-amber-100 text-amber-700; }
+  .badge-blue   { @apply badge bg-blue-100 text-blue-700; }
+  .badge-orange { @apply badge bg-orange-100 text-orange-700; }
+  .badge-red    { @apply badge bg-red-100 text-red-700; }
+  .badge-gray   { @apply badge bg-slate-100 text-slate-600; }
+  .badge-navy   { @apply badge bg-navy-100 text-navy-700; }
+
+  /* ── Sidebar ── */
+  .sidebar-link         { @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all duration-150; }
+  .sidebar-link.active  { @apply bg-primary-600/20 text-primary-400 font-semibold; }
+
+  /* ── Table ── */
+  .table-row { @apply border-b border-slate-100 hover:bg-slate-50 transition-colors; }
+
+  /* ── Glassmorphism ── */
+  .glass      { @apply bg-white/10 backdrop-blur-xl border border-white/20; }
+  .glass-dark { @apply bg-navy-950/70 backdrop-blur-xl border border-white/10; }
+
+  /* ── Gradients ── */
+  .gradient-text { @apply bg-gradient-to-r from-primary-300 via-primary-400 to-emerald-300 bg-clip-text text-transparent; }
+  .gradient-hero { background: linear-gradient(135deg, #0f1e50 0%, #1a2b70 50%, #0f2d3d 100%); }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .scrollbar-hide { scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
