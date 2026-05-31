@@ -49,7 +49,6 @@ export default function Catalog() {
       if (filters.max_price) params.max_price = filters.max_price;
       params.page = filters.page;
       const { data } = await api.get('/products', { params });
-      data.products.forEach(p => p.images = JSON.parse(p.images || '[]'));
       setProducts(data.products);
       setTotal(data.total);
       setPages(data.pages);

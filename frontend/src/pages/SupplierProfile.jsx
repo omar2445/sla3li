@@ -18,7 +18,6 @@ export default function SupplierProfile() {
       api.get(`/products`, { params: { wholesaler_id: id } }),
     ]).then(([userRes, prodRes]) => {
       api.get('/admin/users', { params: { } }).catch(() => null);
-      prodRes.data.products.forEach(p => p.images = JSON.parse(p.images || '[]'));
       setProducts(prodRes.data.products);
       if (prodRes.data.products[0]) {
         setSupplier({ name: prodRes.data.products[0].wholesaler_name, business_name: prodRes.data.products[0].business_name, wilaya: prodRes.data.products[0].wilaya, phone: prodRes.data.products[0].wholesaler_phone });

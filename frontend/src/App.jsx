@@ -13,6 +13,7 @@ import RetailerDashboard from './pages/RetailerDashboard';
 import WholesalerDashboard from './pages/WholesalerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
+import Chatbot from './components/Chatbot';
 
 const DashboardRedirect = () => {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+      <Chatbot />
     </div>
   );
 }

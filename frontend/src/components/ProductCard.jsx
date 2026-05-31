@@ -76,7 +76,15 @@ export default function ProductCard({ product, onFavoriteToggle }) {
       </Link>
 
       <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-        <button onClick={() => addToCart(product)} disabled={!product.stock_qty} className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+        <button
+          onClick={() => {
+            if (!user) { toast.error('Please login to add items to cart'); return; }
+            if (user.role !== 'retailer') { toast.error('Only retailers can add to cart'); return; }
+            addToCart(product);
+          }}
+          disabled={!product.stock_qty}
+          className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           <ShoppingCart size={14} />
           {t.addToCart}
         </button>

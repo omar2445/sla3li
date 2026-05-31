@@ -295,7 +295,7 @@ export default function Home() {
       {/* ── Features (Asymmetric Floating Cards) ───────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
-          <p className="text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Why Sla3Li</p>
+          <p className="text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Why SELAALI</p>
           <h2 className="text-3xl font-bold text-slate-800">Everything Your Business Needs</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -380,7 +380,7 @@ export default function Home() {
             ) : (
               <>
                 <h2 className="text-3xl font-bold text-white mb-4">
-                  {lang === 'ar' ? 'انضم إلى سلاعلي اليوم' : 'Start Trading Smarter Today'}
+                  {lang === 'ar' ? 'انضم إلى سلعلي اليوم' : 'Start Trading Smarter Today'}
                 </h2>
                 <p className="text-white/50 mb-8 text-base">
                   {lang === 'ar' ? 'سجّل مجاناً وابدأ التجارة مع أفضل الموردين في الجزائر.' : 'Free to join. Connect with Algeria\'s top wholesale suppliers instantly.'}

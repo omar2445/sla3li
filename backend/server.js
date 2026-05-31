@@ -18,7 +18,8 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map(s => s.trim());
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) return cb(null, true);
+    // Allow any localhost port in development
+    if (!origin || /^http:\/\/localhost:\d+$/.test(origin) || allowedOrigins.some(o => origin.startsWith(o))) return cb(null, true);
     cb(new Error('CORS: origin not allowed'));
   },
   credentials: true,

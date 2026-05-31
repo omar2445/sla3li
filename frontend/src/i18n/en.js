@@ -3,7 +3,7 @@ const en = {
   home: 'Home', catalog: 'Catalog', login: 'Login', register: 'Register', logout: 'Logout',
   dashboard: 'Dashboard', profile: 'Profile', notifications: 'Notifications',
   // Home
-  welcome: 'Welcome to Sla3Li', tagline: 'Trade Made Simple',
+  welcome: 'Welcome to SELAALI', tagline: 'Trade Made Simple',
   subtitle: 'Connecting Wholesalers, Retailers, and Delivery Providers across Algeria',
   getStarted: 'Get Started Now', browseProducts: 'Browse Products',
   forWholesalers: 'For Wholesalers', forRetailers: 'For Retailers', forDelivery: 'For Delivery Agents',
@@ -62,6 +62,10 @@ const en = {
   cartEmpty: 'Your cart is empty', checkout: 'Checkout', cart: 'Cart',
   supplierProfile: 'Supplier Profile', contactSupplier: 'Contact Supplier',
   searchResults: 'Search Results', showing: 'Showing', of: 'of', results: 'results',
+  // Chatbot
+  chatbotTitle: 'SELAALI Assistant', chatbotSubtitle: 'Online · Ask me anything',
+  chatbotWelcome: 'Hi! I\'m the SELAALI assistant. How can I help you today?',
+  chatbotPlaceholder: 'Type a message...', chatbotError: 'Sorry, something went wrong. Please try again.',
 };
 
 export default en;

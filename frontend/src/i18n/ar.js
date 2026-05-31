@@ -3,7 +3,7 @@ const ar = {
   home: 'الرئيسية', catalog: 'المنتجات', login: 'تسجيل الدخول', register: 'إنشاء حساب', logout: 'خروج',
   dashboard: 'لوحة التحكم', profile: 'الملف الشخصي', notifications: 'الإشعارات',
   // Home
-  welcome: 'مرحباً بكم في سلاعلي', tagline: 'التجارة بسيطة',
+  welcome: 'مرحباً بكم في سلعلي', tagline: 'التجارة بسيطة',
   subtitle: 'يربط تجار الجملة والتجزئة ومزودي التوصيل عبر الجزائر',
   getStarted: 'ابدأ الآن', browseProducts: 'تصفح المنتجات',
   forWholesalers: 'لتجار الجملة', forRetailers: 'للتجار', forDelivery: 'لعمال التوصيل',
@@ -62,6 +62,10 @@ const ar = {
   cartEmpty: 'سلة الشراء فارغة', checkout: 'إتمام الشراء', cart: 'السلة',
   supplierProfile: 'ملف المورد', contactSupplier: 'تواصل مع المورد',
   searchResults: 'نتائج البحث', showing: 'عرض', of: 'من', results: 'نتيجة',
+  // Chatbot
+  chatbotTitle: 'مساعد سلعلي', chatbotSubtitle: 'متصل · اسألني أي شيء',
+  chatbotWelcome: 'مرحباً! أنا مساعد سلعلي. كيف يمكنني مساعدتك اليوم؟',
+  chatbotPlaceholder: 'اكتب رسالة...', chatbotError: 'عذراً، حدث خطأ ما. الرجاء المحاولة مرة أخرى.',
 };
 
 export default ar;

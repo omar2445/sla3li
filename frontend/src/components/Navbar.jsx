@@ -5,18 +5,15 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLang } from '../context/LangContext';
 
+import logoMark from '../logo/Selaali-LeafBag-mark.svg';
+
 const Logo = () => (
   <Link to="/" className="flex items-center gap-2.5 group">
-    <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50 transition-shadow">
-      <svg viewBox="0 0 36 36" className="w-6 h-6 fill-white">
-        <polygon points="18,4 32,28 4,28" opacity="0.9"/>
-        <circle cx="18" cy="20" r="5" fill="white" opacity="0.7"/>
-      </svg>
-    </div>
-    <div>
-      <div className="font-bold text-white text-lg leading-none tracking-tight">Sla3Li</div>
-      <div className="text-xs text-primary-400 font-medium leading-none">سلاعلي</div>
-    </div>
+    <img src={logoMark} alt="" className="h-10 w-10" />
+    <span className="font-bold text-xl tracking-widest leading-none">
+      <span className="text-[#22C57A]">S</span>
+      <span className="text-white">ELAALI</span>
+    </span>
   </Link>
 );
 

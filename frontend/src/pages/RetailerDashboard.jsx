@@ -31,7 +31,6 @@ export default function RetailerDashboard() {
       api.get('/products/my/favorites'),
     ]).then(([ord, fav]) => {
       setOrders(ord.data);
-      fav.data.forEach(p => p.images = JSON.parse(p.images || '[]'));
       setFavorites(fav.data);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);

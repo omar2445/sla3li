@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLang } from '../context/LangContext';
 import { MapPin, Phone, Mail } from 'lucide-react';
+import logoMark from '../logo/Selaali-LeafBag-mark.svg';
 
 export default function Footer() {
   const { t, lang } = useLang();
@@ -10,10 +11,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <svg viewBox="0 0 36 36" className="w-5 h-5 fill-white"><polygon points="18,4 32,28 4,28" opacity="0.9"/><circle cx="18" cy="20" r="5" fill="white" opacity="0.7"/></svg>
-              </div>
-              <span className="font-bold text-white text-lg">Sla3Li | سلاعلي</span>
+              <img src={logoMark} alt="" className="h-9 w-9" />
+              <span className="font-bold text-lg tracking-widest leading-none">
+                <span className="text-[#22C57A]">S</span>
+                <span className="text-white">ELAALI</span>
+              </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">{t.subtitle}</p>
           </div>
@@ -46,7 +48,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-slate-500">
-          <p>© 2024 Sla3Li. {lang === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}</p>
+          <p>© 2024 SELAALI. {lang === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}</p>
           <p>{lang === 'ar' ? 'صُنع في الجزائر 🇩🇿' : 'Made in Algeria 🇩🇿'}</p>
         </div>
       </div>
