@@ -114,4 +114,13 @@ db.exec(`
   try { db.exec(`ALTER TABLE users ADD COLUMN ${col} TEXT DEFAULT ''`); } catch {}
 });
 
+// Migration: ensure new categories exist
+[
+  ['Hardware & Tools', 'أدوات ومعدات', '🔧'],
+  ['Accessories',      'إكسسوارات',    '👜'],
+].forEach(([name, name_ar, icon]) => {
+  const exists = db.prepare('SELECT id FROM categories WHERE name = ?').get(name);
+  if (!exists) db.prepare('INSERT INTO categories (name, name_ar, icon) VALUES (?,?,?)').run(name, name_ar, icon);
+});
+
 module.exports = db;

@@ -12,6 +12,8 @@ const CATEGORIES = [
   { icon: '🌿', en: 'Agricultural', ar: 'منتجات زراعية' },
   { icon: '💄', en: 'Cosmetics', ar: 'مستحضرات التجميل' },
   { icon: '📚', en: 'Stationery', ar: 'قرطاسية' },
+  { icon: '🔧', en: 'Hardware & Tools', ar: 'أدوات ومعدات' },
+  { icon: '👜', en: 'Accessories', ar: 'إكسسوارات' },
 ];
 
 const STATS = [

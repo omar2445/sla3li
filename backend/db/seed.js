@@ -14,6 +14,8 @@ const cats = [
   ['Agricultural Products', 'منتجات زراعية', '🌿'],
   ['Cosmetics & Hygiene', 'مستحضرات التجميل', '💄'],
   ['Stationery & Office', 'قرطاسية ومكتبيات', '📚'],
+  ['Hardware & Tools', 'أدوات ومعدات', '🔧'],
+  ['Accessories', 'إكسسوارات', '👜'],
 ];
 
 const catStmt = db.prepare('INSERT OR IGNORE INTO categories (name, name_ar, icon) VALUES (?,?,?)');
