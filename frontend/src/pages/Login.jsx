@@ -13,7 +13,7 @@ const ROLE_ROUTES = {
 };
 
 const DEMO_ACCOUNTS = [
-  { label: 'Admin',      email: 'admin@sla3li.dz',      password: 'admin',   color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { label: 'Admin',      email: 'admin@sla3li.dz',      password: 'admin123', color: 'bg-purple-50 text-purple-700 border-purple-200' },
   { label: 'Wholesaler', email: 'wholesaler1@sla3li.dz', password: 'pass123', color: 'bg-blue-50 text-blue-700 border-blue-200' },
   { label: 'Retailer',   email: 'retailer1@sla3li.dz',   password: 'pass123', color: 'bg-green-50 text-green-700 border-green-200' },
   { label: 'Driver',     email: 'driver1@sla3li.dz',     password: 'pass123', color: 'bg-orange-50 text-orange-700 border-orange-200' },
