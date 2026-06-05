@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Clock, CheckCircle, XCircle, Heart, Trash2, Plus, Minus, ShoppingCart, MapPin } from 'lucide-react';
+import { ShoppingBag, Clock, CheckCircle, XCircle, Heart, Trash2, Plus, Minus, ShoppingCart, MapPin, Navigation } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import TrackingModal from '../components/TrackingModal';
 
 const statusBadge = (s) => {
   const map = { pending: 'badge-yellow', confirmed: 'badge-blue', processing: 'badge-orange', shipped: 'badge-blue', delivered: 'badge-green', cancelled: 'badge-red' };
@@ -24,6 +25,7 @@ export default function RetailerDashboard() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [address, setAddress] = useState(user?.address || '');
+  const [trackingOrder, setTrackingOrder] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -63,8 +65,11 @@ export default function RetailerDashboard() {
 
   const tabLabel = { overview: lang === 'ar' ? 'نظرة عامة' : 'Overview', orders: t.myOrders, cart: t.cart, favorites: t.favorites };
 
+  const trackableStatuses = ['confirmed', 'processing', 'shipped', 'delivered'];
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {trackingOrder && <TrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">{lang === 'ar' ? 'لوحة التاجر' : 'Retailer Dashboard'}</h1>
@@ -134,8 +139,17 @@ export default function RetailerDashboard() {
                       <p className="font-semibold text-slate-800">#{o.id} — {o.wholesaler_name || o.business_name}</p>
                       <p className="text-xs text-slate-400">{new Date(o.created_at).toLocaleString()}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {statusBadge(o.status)}
+                      {trackableStatuses.includes(o.status) && (
+                        <button
+                          onClick={() => setTrackingOrder(o)}
+                          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200 transition-colors"
+                        >
+                          <Navigation size={12} />
+                          {lang === 'ar' ? 'تتبع' : 'Track'}
+                        </button>
+                      )}
                       {o.status === 'pending' && (
                         <button onClick={() => cancelOrder(o.id)} className="text-xs text-red-500 hover:text-red-700 border border-red-200 px-2 py-1 rounded-lg hover:bg-red-50">
                           {t.cancelOrder}

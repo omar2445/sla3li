@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Package, TrendingUp, Clock, CheckCircle, Plus, Edit2, Trash2, Eye, EyeOff, AlertTriangle, BarChart2, ShoppingBag, ImagePlus, X } from 'lucide-react';
+import { Package, TrendingUp, Clock, CheckCircle, Plus, Edit2, Trash2, Eye, EyeOff, AlertTriangle, BarChart2, ShoppingBag, ImagePlus, X, Navigation } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
 import DashboardSidebar from '../components/DashboardSidebar';
 import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
+import TrackingModal from '../components/TrackingModal';
 
 const statusBadge = (s) => {
   const map = { pending: 'badge-yellow', confirmed: 'badge-blue', processing: 'badge-orange', shipped: 'badge-blue', delivered: 'badge-green', cancelled: 'badge-red' };
@@ -35,6 +36,7 @@ export default function WholesalerDashboard() {
   const [existingImages, setExistingImages] = useState([]);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
+  const [trackingOrder, setTrackingOrder] = useState(null);
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -153,6 +155,8 @@ export default function WholesalerDashboard() {
         titleAr="تاجر الجملة"
         activeTab={tab}
       />
+
+      {trackingOrder && <TrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />}
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
@@ -401,6 +405,15 @@ export default function WholesalerDashboard() {
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       {statusBadge(o.status)}
+                      {['confirmed','processing','shipped','delivered'].includes(o.status) && (
+                        <button
+                          onClick={() => setTrackingOrder(o)}
+                          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200 transition-colors"
+                        >
+                          <Navigation size={12} />
+                          {lang === 'ar' ? 'تتبع' : 'Track'}
+                        </button>
+                      )}
                       {o.status === 'pending' && (
                         <>
                           <button onClick={() => updateOrderStatus(o.id, 'confirmed')} className="text-xs bg-navy-700 text-white px-3 py-1.5 rounded-lg hover:bg-navy-600 font-medium">{t.confirm}</button>
