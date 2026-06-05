@@ -119,6 +119,17 @@ router.put('/profile', auth(), (req, res) => {
   res.json({ message: 'Profile updated' });
 });
 
+// Update avatar
+router.put('/avatar', auth(),
+  upload.single('avatar'),
+  (req, res) => {
+    if (!req.file) return res.status(400).json({ message: 'No file provided' });
+    const path = `/uploads/${req.file.filename}`;
+    db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(path, req.user.id);
+    res.json({ avatar: path });
+  }
+);
+
 // Change password
 router.put('/password', auth(), (req, res) => {
   const { current_password, new_password } = req.body;

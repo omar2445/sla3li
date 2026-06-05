@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Briefcase, Lock, FileText, CheckCircle, Upload, Edit2, Save, X, ShieldCheck } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Mail, Phone, MapPin, Briefcase, Lock, FileText, CheckCircle, Upload, Edit2, Save, X, ShieldCheck, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import api, { imgUrl } from '../api/axios';
@@ -89,6 +89,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [pwdForm, setPwdForm] = useState({ current_password: '', new_password: '', confirm: '' });
   const [pwdSaving, setPwdSaving] = useState(false);
@@ -106,6 +108,19 @@ export default function ProfilePage() {
   };
 
   useEffect(() => { fetchProfile(); }, []);
+
+  const uploadAvatar = async (file) => {
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      await api.put('/auth/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await fetchProfile();
+      toast.success(lang === 'ar' ? 'تم تحديث الصورة الشخصية' : 'Profile photo updated');
+    } catch { toast.error('Error uploading photo'); }
+    finally { setAvatarUploading(false); }
+  };
 
   const saveInfo = async () => {
     setSaving(true);
@@ -153,9 +168,28 @@ export default function ProfilePage() {
       {/* Profile header card */}
       <div className="bg-gradient-to-br from-navy-900 to-navy-700 rounded-3xl p-6 mb-6 text-white">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-primary-500/20 border border-primary-500/30 rounded-2xl flex items-center justify-center shrink-0">
-            <User size={28} className="text-primary-300" />
-          </div>
+          <label className="relative group cursor-pointer shrink-0">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-primary-500/20 border-2 border-primary-500/30 flex items-center justify-center">
+              {profile.avatar
+                ? <img src={imgUrl(profile.avatar)} alt="avatar" className="w-full h-full object-cover" />
+                : <span className="text-2xl font-bold text-primary-300">{profile.name?.[0]?.toUpperCase()}</span>
+              }
+            </div>
+            {/* Camera overlay */}
+            <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {avatarUploading
+                ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : <Camera size={18} className="text-white" />
+              }
+            </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={e => uploadAvatar(e.target.files[0])}
+            />
+          </label>
           <div className="min-w-0">
             <h1 className="text-xl font-bold truncate">{profile.name}</h1>
             {profile.business_name && <p className="text-white/60 text-sm truncate">{profile.business_name}</p>}

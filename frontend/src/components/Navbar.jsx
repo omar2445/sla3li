@@ -4,6 +4,7 @@ import { ShoppingCart, User, Menu, X, LogOut, LayoutDashboard, Languages, Chevro
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLang } from '../context/LangContext';
+import { imgUrl } from '../api/axios';
 
 import logoMark from '../logo/Selaali-LeafBag-mark.svg';
 
@@ -102,8 +103,11 @@ export default function Navbar() {
                     onClick={() => setProfileOpen(o => !o)}
                     className="flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white/8 border border-white/10 rounded-xl hover:bg-white/12 transition-all"
                   >
-                    <div className="w-7 h-7 bg-primary-500/20 rounded-lg flex items-center justify-center">
-                      <User size={14} className="text-primary-400" />
+                    <div className="w-7 h-7 rounded-lg overflow-hidden bg-primary-500/20 flex items-center justify-center shrink-0">
+                      {user.avatar
+                        ? <img src={imgUrl(user.avatar)} alt="" className="w-full h-full object-cover" />
+                        : <span className="text-xs font-bold text-primary-300">{user.name?.[0]?.toUpperCase()}</span>
+                      }
                     </div>
                     <span className="text-sm font-medium text-white/80 max-w-24 truncate">{user.name}</span>
                     <ChevronDown size={13} className={`text-white/40 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
@@ -114,8 +118,11 @@ export default function Navbar() {
                       {/* Header */}
                       <div className="bg-gradient-to-br from-navy-900 to-navy-700 px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 bg-primary-500/20 rounded-xl flex items-center justify-center border border-primary-500/30">
-                            <User size={20} className="text-primary-300" />
+                          <div className="w-11 h-11 rounded-xl overflow-hidden bg-primary-500/20 flex items-center justify-center border border-primary-500/30 shrink-0">
+                            {user.avatar
+                              ? <img src={imgUrl(user.avatar)} alt="" className="w-full h-full object-cover" />
+                              : <span className="text-lg font-bold text-primary-300">{user.name?.[0]?.toUpperCase()}</span>
+                            }
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-white truncate">{user.name}</p>
