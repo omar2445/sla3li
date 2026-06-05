@@ -4,12 +4,23 @@ const db = require('../db/database');
 const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+  destination: uploadsDir,
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + Math.random().toString(36).slice(2) + path.extname(file.originalname))
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
 
 // NOTE: specific routes must come BEFORE /:id routes
 
@@ -91,15 +102,21 @@ router.post('/', auth(['wholesaler']), upload.array('images', 5), (req, res) => 
 });
 
 // Update product
-router.put('/:id', auth(['wholesaler', 'admin']), (req, res) => {
+router.put('/:id', auth(['wholesaler', 'admin']), upload.array('images', 5), (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(parseInt(req.params.id));
   if (!product) return res.status(404).json({ message: 'Not found' });
   if (req.user.role === 'wholesaler' && product.wholesaler_id !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
 
   const { name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, category_id, is_active } = req.body;
+
+  const newFiles = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+  let keepImages = [];
+  try { keepImages = JSON.parse(req.body.keep_images || '[]'); } catch {}
+  const images = [...keepImages, ...newFiles];
+
   db.prepare(`
-    UPDATE products SET name=?, name_ar=?, description=?, description_ar=?, price=?, min_order_qty=?, unit=?, unit_ar=?, stock_qty=?, category_id=?, is_active=?, updated_at=datetime('now') WHERE id=?
-  `).run(name, name_ar || '', description || '', description_ar || '', parseFloat(price), parseInt(min_order_qty) || 1, unit, unit_ar || '', parseInt(stock_qty) || 0, category_id || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, parseInt(req.params.id));
+    UPDATE products SET name=?, name_ar=?, description=?, description_ar=?, price=?, min_order_qty=?, unit=?, unit_ar=?, stock_qty=?, category_id=?, is_active=?, images=?, updated_at=datetime('now') WHERE id=?
+  `).run(name, name_ar || '', description || '', description_ar || '', parseFloat(price), parseInt(min_order_qty) || 1, unit || 'piece', unit_ar || '', parseInt(stock_qty) || 0, category_id || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, JSON.stringify(images), parseInt(req.params.id));
   res.json({ message: 'Product updated' });
 });
 

@@ -3,7 +3,7 @@ import { ShoppingCart, Heart, MapPin, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
+import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
 
 const statusBadge = (stock) => {
@@ -19,7 +19,7 @@ export default function ProductCard({ product, onFavoriteToggle }) {
 
   const name = lang === 'ar' && product.name_ar ? product.name_ar : product.name;
   const supplier = product.business_name || product.wholesaler_name || '';
-  const image = Array.isArray(product.images) && product.images[0] ? product.images[0] : null;
+  const image = Array.isArray(product.images) && product.images[0] ? imgUrl(product.images[0]) : null;
 
   const handleFavorite = async (e) => {
     e.preventDefault();

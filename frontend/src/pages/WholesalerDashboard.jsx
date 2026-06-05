@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Package, TrendingUp, Clock, CheckCircle, Plus, Edit2, Trash2, Eye, EyeOff, AlertTriangle, BarChart2, ShoppingBag } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Package, TrendingUp, Clock, CheckCircle, Plus, Edit2, Trash2, Eye, EyeOff, AlertTriangle, BarChart2, ShoppingBag, ImagePlus, X } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
 import DashboardSidebar from '../components/DashboardSidebar';
-import api from '../api/axios';
+import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
 
 const statusBadge = (s) => {
@@ -31,7 +31,10 @@ export default function WholesalerDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef(null);
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -41,20 +44,44 @@ export default function WholesalerDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const openEdit = (p) => { setForm({ name: p.name, name_ar: p.name_ar, description: p.description, description_ar: p.description_ar, price: p.price, min_order_qty: p.min_order_qty, unit: p.unit, unit_ar: p.unit_ar, stock_qty: p.stock_qty, category_id: p.category_id }); setEditId(p.id); setShowForm(true); };
-  const openAdd  = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true); };
+  const openEdit = (p) => {
+    setForm({ name: p.name, name_ar: p.name_ar || '', description: p.description || '', description_ar: p.description_ar || '', price: p.price, min_order_qty: p.min_order_qty, unit: p.unit, unit_ar: p.unit_ar, stock_qty: p.stock_qty, category_id: p.category_id || '' });
+    setExistingImages(Array.isArray(p.images) ? p.images : []);
+    setImageFiles([]);
+    setEditId(p.id);
+    setShowForm(true);
+  };
+  const openAdd = () => {
+    setForm(EMPTY_FORM);
+    setExistingImages([]);
+    setImageFiles([]);
+    setEditId(null);
+    setShowForm(true);
+  };
+
+  const handleImagePick = (e) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 5 - existingImages.length - imageFiles.length;
+    setImageFiles(prev => [...prev, ...files.slice(0, remaining)]);
+    e.target.value = '';
+  };
 
   const saveProduct = async () => {
     if (!form.name || !form.price) { toast.error(lang === 'ar' ? 'اسم المنتج والسعر مطلوبان' : 'Name and price required'); return; }
     setSaving(true);
     try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v ?? ''));
+      imageFiles.forEach(f => fd.append('images', f));
+
       if (editId) {
-        await api.put(`/products/${editId}`, { ...form, is_active: 1 });
-        setProducts(prev => prev.map(p => p.id === editId ? { ...p, ...form } : p));
+        fd.append('keep_images', JSON.stringify(existingImages));
+        fd.append('is_active', '1');
+        await api.put(`/products/${editId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const updatedImages = [...existingImages, ...imageFiles.map(f => URL.createObjectURL(f))];
+        setProducts(prev => prev.map(p => p.id === editId ? { ...p, ...form, images: updatedImages } : p));
         toast.success(lang === 'ar' ? 'تم تحديث المنتج' : 'Product updated');
       } else {
-        const fd = new FormData();
-        Object.entries(form).forEach(([k, v]) => fd.append(k, v));
         await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         const newProd = await api.get('/products/my/list');
         setProducts(newProd.data);
@@ -255,6 +282,44 @@ export default function WholesalerDashboard() {
                         <div><label className="label text-xs">Unit (AR)</label><input className="input text-sm" dir="rtl" value={form.unit_ar} onChange={e => setF('unit_ar', e.target.value)} /></div>
                       </div>
                       <div><label className="label text-xs">Description</label><textarea className="input text-sm h-20 resize-none" value={form.description} onChange={e => setF('description', e.target.value)} /></div>
+
+                      {/* Image picker */}
+                      <div>
+                        <label className="label text-xs">{lang === 'ar' ? 'الصور (حد أقصى 5)' : 'Images (max 5)'}</label>
+                        <div className="flex flex-wrap gap-2 mt-1.5">
+                          {/* Existing images */}
+                          {existingImages.map((url, i) => (
+                            <div key={url} className="relative group w-20 h-20 shrink-0">
+                              <img src={imgUrl(url)} alt="" className="w-full h-full object-cover rounded-xl border border-slate-200" />
+                              <button
+                                type="button"
+                                onClick={() => setExistingImages(prev => prev.filter((_, j) => j !== i))}
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                              ><X size={10} /></button>
+                            </div>
+                          ))}
+                          {/* New file previews */}
+                          {imageFiles.map((file, i) => (
+                            <div key={i} className="relative group w-20 h-20 shrink-0">
+                              <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover rounded-xl border-2 border-primary-300" />
+                              <button
+                                type="button"
+                                onClick={() => setImageFiles(prev => prev.filter((_, j) => j !== i))}
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                              ><X size={10} /></button>
+                            </div>
+                          ))}
+                          {/* Add button */}
+                          {existingImages.length + imageFiles.length < 5 && (
+                            <label className="w-20 h-20 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors shrink-0">
+                              <ImagePlus size={18} className="text-slate-400" />
+                              <span className="text-xs text-slate-400 mt-1">{lang === 'ar' ? 'إضافة' : 'Add'}</span>
+                              <input ref={fileInputRef} type="file" className="hidden" multiple accept="image/*" onChange={handleImagePick} />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="flex gap-3 pt-2">
                         <button onClick={() => setShowForm(false)} className="btn-secondary flex-1">{t.cancel}</button>
                         <button onClick={saveProduct} disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2">
@@ -271,6 +336,7 @@ export default function WholesalerDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="px-4 py-3.5 w-14" />
                         <th className="text-left px-5 py-3.5 text-slate-500 font-semibold text-xs uppercase tracking-wider">{t.name}</th>
                         <th className="text-left px-5 py-3.5 text-slate-500 font-semibold text-xs uppercase tracking-wider">{t.price}</th>
                         <th className="text-left px-5 py-3.5 text-slate-500 font-semibold text-xs uppercase tracking-wider">{t.stock}</th>
@@ -281,6 +347,13 @@ export default function WholesalerDashboard() {
                     <tbody>
                       {products.map(p => (
                         <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
+                              {Array.isArray(p.images) && p.images[0]
+                                ? <img src={imgUrl(p.images[0])} alt="" className="w-full h-full object-cover" />
+                                : <Package size={16} className="text-slate-300" />}
+                            </div>
+                          </td>
                           <td className="px-5 py-3.5 font-medium text-slate-800">{lang === 'ar' ? p.name_ar : p.name}</td>
                           <td className="px-5 py-3.5 text-slate-600 font-mono text-sm">{p.price?.toLocaleString()} DZD</td>
                           <td className="px-5 py-3.5">

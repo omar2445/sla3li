@@ -1,9 +1,18 @@
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: API_BASE,
   timeout: 15000,
 });
+
+// Convert a stored /uploads/... path to a full URL in production
+export const imgUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return API_BASE.replace(/\/api$/, '') + path;
+};
 
 api.interceptors.response.use(
   res => res,
