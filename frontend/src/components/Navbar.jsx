@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, LogOut, LayoutDashboard, Languages, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, LayoutDashboard, Languages, ChevronDown, MapPin, Mail, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLang } from '../context/LangContext';
@@ -25,11 +25,19 @@ export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => { if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const handleLogout = () => { logout(); navigate('/'); setMobileOpen(false); };
@@ -88,17 +96,82 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                <div className="flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white/8 border border-white/10 rounded-xl">
-                  <div className="w-7 h-7 bg-primary-500/20 rounded-lg flex items-center justify-center">
-                    <User size={14} className="text-primary-400" />
-                  </div>
-                  <span className="text-sm font-medium text-white/80 max-w-24 truncate">{user.name}</span>
-                  <ChevronDown size={13} className="text-white/40" />
-                </div>
+                {/* Profile dropdown */}
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setProfileOpen(o => !o)}
+                    className="flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white/8 border border-white/10 rounded-xl hover:bg-white/12 transition-all"
+                  >
+                    <div className="w-7 h-7 bg-primary-500/20 rounded-lg flex items-center justify-center">
+                      <User size={14} className="text-primary-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white/80 max-w-24 truncate">{user.name}</span>
+                    <ChevronDown size={13} className={`text-white/40 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
+                  </button>
 
-                <button onClick={handleLogout} className="p-2.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                  <LogOut size={17} />
-                </button>
+                  {profileOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-fade-in">
+                      {/* Header */}
+                      <div className="bg-gradient-to-br from-navy-900 to-navy-700 px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 bg-primary-500/20 rounded-xl flex items-center justify-center border border-primary-500/30">
+                            <User size={20} className="text-primary-300" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-white truncate">{user.name}</p>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              user.role === 'admin' ? 'bg-purple-500/30 text-purple-200' :
+                              user.role === 'wholesaler' ? 'bg-blue-500/30 text-blue-200' :
+                              user.role === 'retailer' ? 'bg-primary-500/30 text-primary-200' :
+                              'bg-orange-500/30 text-orange-200'
+                            }`}>{user.role}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Info rows */}
+                      <div className="px-4 py-3 space-y-2.5 border-b border-slate-100">
+                        <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                          <Mail size={14} className="text-slate-400 shrink-0" />
+                          <span className="truncate">{user.email}</span>
+                        </div>
+                        {user.business_name && (
+                          <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                            <Briefcase size={14} className="text-slate-400 shrink-0" />
+                            <span className="truncate">{user.business_name}</span>
+                          </div>
+                        )}
+                        {user.wilaya && (
+                          <div className="flex items-center gap-2.5 text-sm text-slate-600">
+                            <MapPin size={14} className="text-slate-400 shrink-0" />
+                            <span>{user.wilaya}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="p-2">
+                        {dashPath && (
+                          <Link
+                            to={dashPath}
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors w-full"
+                          >
+                            <LayoutDashboard size={15} className="text-primary-500" />
+                            {t.dashboard}
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => { handleLogout(); setProfileOpen(false); }}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 font-medium transition-colors w-full"
+                        >
+                          <LogOut size={15} />
+                          {t.logout}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>

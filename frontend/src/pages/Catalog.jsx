@@ -43,7 +43,7 @@ export default function Catalog() {
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -262,7 +262,7 @@ export default function Catalog() {
 
       <div className="flex gap-6">
         {/* Sidebar filters */}
-        <div className={`${filterOpen ? 'block' : 'hidden'} lg:block w-64 shrink-0`}>
+        <div className={`${filterOpen ? 'block' : 'hidden'} w-64 shrink-0`}>
           <div className="card sticky top-20">
             <h3 className="font-semibold text-slate-700 mb-4">{t.filter}</h3>
 
