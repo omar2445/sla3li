@@ -107,7 +107,7 @@ router.post('/login', [
 
 // Get current user profile
 router.get('/me', auth(), (req, res) => {
-  const user = db.prepare('SELECT id, name, name_ar, email, role, phone, wilaya, address, business_name, business_name_ar, is_approved, avatar, created_at FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT id, name, name_ar, email, role, phone, wilaya, address, business_name, business_name_ar, is_approved, avatar, id_image, license_image, gray_card_image, created_at FROM users WHERE id = ?').get(req.user.id);
   res.json(user);
 });
 
@@ -115,8 +115,40 @@ router.get('/me', auth(), (req, res) => {
 router.put('/profile', auth(), (req, res) => {
   const { name, name_ar, phone, wilaya, address, business_name, business_name_ar } = req.body;
   db.prepare('UPDATE users SET name=?, name_ar=?, phone=?, wilaya=?, address=?, business_name=?, business_name_ar=? WHERE id=?')
-    .run(name, name_ar, phone, wilaya, address, business_name, business_name_ar, req.user.id);
+    .run(name || '', name_ar || '', phone || '', wilaya || '', address || '', business_name || '', business_name_ar || '', req.user.id);
   res.json({ message: 'Profile updated' });
 });
+
+// Change password
+router.put('/password', auth(), (req, res) => {
+  const { current_password, new_password } = req.body;
+  if (!current_password || !new_password || new_password.length < 6)
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  const row = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+  if (!bcrypt.compareSync(current_password, row.password_hash))
+    return res.status(401).json({ message: 'Current password is incorrect' });
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(bcrypt.hashSync(new_password, 10), req.user.id);
+  res.json({ message: 'Password changed successfully' });
+});
+
+// Update documents (ID / licence / gray card)
+router.put('/documents', auth(),
+  upload.fields([
+    { name: 'id_image', maxCount: 1 },
+    { name: 'license_image', maxCount: 1 },
+    { name: 'gray_card_image', maxCount: 1 },
+  ]),
+  (req, res) => {
+    const sets = [];
+    const params = [];
+    if (req.files?.id_image?.[0])       { sets.push('id_image = ?');        params.push(`/uploads/${req.files.id_image[0].filename}`); }
+    if (req.files?.license_image?.[0])  { sets.push('license_image = ?');   params.push(`/uploads/${req.files.license_image[0].filename}`); }
+    if (req.files?.gray_card_image?.[0]){ sets.push('gray_card_image = ?'); params.push(`/uploads/${req.files.gray_card_image[0].filename}`); }
+    if (sets.length === 0) return res.status(400).json({ message: 'No files provided' });
+    params.push(req.user.id);
+    db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...params);
+    res.json({ message: 'Documents updated' });
+  }
+);
 
 module.exports = router;

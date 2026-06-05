@@ -13,6 +13,7 @@ import RetailerDashboard from './pages/RetailerDashboard';
 import WholesalerDashboard from './pages/WholesalerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
+import ProfilePage from './pages/ProfilePage';
 import Chatbot from './components/Chatbot';
 
 const DashboardRedirect = () => {
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/dashboard/wholesaler" element={<ProtectedRoute roles={['wholesaler']}><WholesalerDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/delivery" element={<ProtectedRoute roles={['driver']}><DeliveryDashboard /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>

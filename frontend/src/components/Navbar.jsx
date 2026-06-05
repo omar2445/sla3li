@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, LogOut, LayoutDashboard, Languages, ChevronDown, MapPin, Mail, Briefcase } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, LayoutDashboard, Languages, ChevronDown, MapPin, Mail, Briefcase, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLang } from '../context/LangContext';
@@ -152,19 +152,19 @@ export default function Navbar() {
                       {/* Actions */}
                       <div className="p-2">
                         {dashPath && (
-                          <Link
-                            to={dashPath}
-                            onClick={() => setProfileOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors w-full"
-                          >
+                          <Link to={dashPath} onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors w-full">
                             <LayoutDashboard size={15} className="text-primary-500" />
                             {t.dashboard}
                           </Link>
                         )}
-                        <button
-                          onClick={() => { handleLogout(); setProfileOpen(false); }}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 font-medium transition-colors w-full"
-                        >
+                        <Link to="/profile" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors w-full">
+                          <Settings size={15} className="text-slate-400" />
+                          {lang === 'ar' ? 'الملف الشخصي' : 'Profile & Settings'}
+                        </Link>
+                        <button onClick={() => { handleLogout(); setProfileOpen(false); }}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 font-medium transition-colors w-full">
                           <LogOut size={15} />
                           {t.logout}
                         </button>
