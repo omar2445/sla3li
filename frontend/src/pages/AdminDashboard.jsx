@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, Package, ShoppingBag, TrendingUp, CheckCircle, XCircle, AlertCircle, Trash2, Plus } from 'lucide-react';
+import { Users, Package, ShoppingBag, TrendingUp, CheckCircle, XCircle, AlertCircle, Trash2, Plus, FileText, X } from 'lucide-react';
 import { useLang } from '../context/LangContext';
-import api from '../api/axios';
+import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
 
 const roleBadge = (r) => {
@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const [filterRole, setFilterRole] = useState('');
   const [filterApproved, setFilterApproved] = useState('');
   const [search, setSearch] = useState('');
+  const [docsUser, setDocsUser] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -67,6 +68,43 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      {/* Docs modal */}
+      {docsUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDocsUser(null)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="font-bold text-slate-800">{docsUser.name}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{docsUser.role} · {docsUser.email}</p>
+              </div>
+              <button onClick={() => setDocsUser(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"><X size={18} /></button>
+            </div>
+            <div className="space-y-4">
+              {[
+                { key: 'id_image', labelEn: 'National ID', labelAr: 'بطاقة الهوية' },
+                { key: 'license_image', labelEn: 'Business License', labelAr: 'السجل التجاري' },
+                { key: 'gray_card_image', labelEn: 'Gray Card', labelAr: 'البطاقة الرمادية' },
+              ].filter(d => docsUser[d.key]).map(d => (
+                <div key={d.key}>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{lang === 'ar' ? d.labelAr : d.labelEn}</p>
+                  <a href={imgUrl(docsUser[d.key])} target="_blank" rel="noopener noreferrer">
+                    <img src={imgUrl(docsUser[d.key])} alt={d.labelEn} className="w-full rounded-2xl border border-slate-200 hover:opacity-90 transition-opacity cursor-pointer" />
+                  </a>
+                </div>
+              ))}
+              {!docsUser.id_image && !docsUser.license_image && !docsUser.gray_card_image && (
+                <p className="text-slate-400 text-sm text-center py-6">{lang === 'ar' ? 'لا توجد مستندات مرفوعة' : 'No documents uploaded'}</p>
+              )}
+            </div>
+            {!docsUser.is_approved && docsUser.role !== 'admin' && (
+              <button onClick={() => { approveUser(docsUser.id); setDocsUser(null); }} className="btn-primary w-full mt-5 flex items-center justify-center gap-2">
+                <CheckCircle size={16} /> {t.approve}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">{lang === 'ar' ? 'لوحة الإدارة' : 'Admin Dashboard'}</h1>
         <p className="text-slate-500 text-sm">{lang === 'ar' ? 'إدارة كاملة للمنصة' : 'Full platform management'}</p>
@@ -103,7 +141,14 @@ export default function AdminDashboard() {
                 {users.filter(u => !u.is_approved && u.role !== 'admin').slice(0, 5).map(u => (
                   <div key={u.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                     <div><p className="font-medium text-sm text-slate-800">{u.name}</p><p className="text-xs text-slate-400">{u.email} · {roleBadge(u.role)}</p></div>
-                    <button onClick={() => approveUser(u.id)} className="btn-primary text-xs py-1.5 px-3">{t.approve}</button>
+                    <div className="flex items-center gap-2">
+                      {(u.id_image || u.license_image || u.gray_card_image) && (
+                        <button onClick={() => setDocsUser(u)} className="text-xs border border-slate-200 text-slate-500 px-2 py-1.5 rounded-lg hover:bg-slate-50 flex items-center gap-1">
+                          <FileText size={12} /> Docs
+                        </button>
+                      )}
+                      <button onClick={() => approveUser(u.id)} className="btn-primary text-xs py-1.5 px-3">{t.approve}</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -144,6 +189,9 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
+                        {u.role !== 'admin' && (u.id_image || u.license_image || u.gray_card_image) && (
+                          <button onClick={() => setDocsUser(u)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="View documents"><FileText size={14} /></button>
+                        )}
                         {!u.is_approved && u.role !== 'admin' && <button onClick={() => approveUser(u.id)} className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600">{t.approve}</button>}
                         {u.is_active && u.role !== 'admin' && <button onClick={() => suspendUser(u.id)} className="text-xs bg-amber-500 text-white px-2 py-1 rounded-lg hover:bg-amber-600">{t.suspend}</button>}
                         {!u.is_active && <button onClick={() => activateUser(u.id)} className="text-xs bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600">{t.activate}</button>}

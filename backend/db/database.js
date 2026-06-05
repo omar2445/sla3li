@@ -109,4 +109,9 @@ db.exec(`
   );
 `);
 
+// Migration: add document columns if they don't exist yet
+['id_image', 'license_image', 'gray_card_image'].forEach(col => {
+  try { db.exec(`ALTER TABLE users ADD COLUMN ${col} TEXT DEFAULT ''`); } catch {}
+});
+
 module.exports = db;

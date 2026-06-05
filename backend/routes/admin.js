@@ -38,7 +38,7 @@ router.get('/users', adminOnly, wrap((req, res) => {
 
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
 
-  const listSql  = `SELECT id, name, name_ar, email, role, phone, wilaya, business_name, is_approved, is_active, created_at FROM users ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+  const listSql  = `SELECT id, name, name_ar, email, role, phone, wilaya, business_name, is_approved, is_active, id_image, license_image, gray_card_image, created_at FROM users ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
   const countSql = `SELECT COUNT(*) as c FROM users ${where}`;
 
   const users = params.length ? db.prepare(listSql).all(...params) : db.prepare(listSql).all();
