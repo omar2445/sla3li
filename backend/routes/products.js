@@ -130,9 +130,16 @@ router.put('/:id', auth(['wholesaler', 'admin']), upload.array('images', 5), (re
   const { name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, category_id, is_active } = req.body;
 
   const newFiles = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
-  let keepImages = [];
-  try { keepImages = JSON.parse(req.body.keep_images || '[]'); } catch {}
-  const images = [...keepImages, ...newFiles];
+  let images;
+  if (req.body.keep_images !== undefined) {
+    // FormData upload — use explicit keep list + new uploads
+    let keepImages = [];
+    try { keepImages = JSON.parse(req.body.keep_images); } catch {}
+    images = [...keepImages, ...newFiles];
+  } else {
+    // JSON request (e.g. toggleActive) — preserve existing images
+    images = JSON.parse(product.images || '[]');
+  }
 
   db.prepare(`
     UPDATE products SET name=?, name_ar=?, description=?, description_ar=?, price=?, min_order_qty=?, unit=?, unit_ar=?, stock_qty=?, category_id=?, is_active=?, images=?, updated_at=datetime('now') WHERE id=?
