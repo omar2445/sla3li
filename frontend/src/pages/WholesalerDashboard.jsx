@@ -79,12 +79,12 @@ export default function WholesalerDashboard() {
       if (editId) {
         fd.append('keep_images', JSON.stringify(existingImages));
         fd.append('is_active', '1');
-        await api.put(`/products/${editId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await api.put(`/products/${editId}`, fd);
         const updatedImages = [...existingImages, ...imageFiles.map(f => URL.createObjectURL(f))];
         setProducts(prev => prev.map(p => p.id === editId ? { ...p, ...form, images: updatedImages } : p));
         toast.success(lang === 'ar' ? 'تم تحديث المنتج' : 'Product updated');
       } else {
-        await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await api.post('/products', fd);
         const newProd = await api.get('/products/my/list');
         setProducts(newProd.data);
         toast.success(lang === 'ar' ? 'تم إضافة المنتج' : 'Product added');
