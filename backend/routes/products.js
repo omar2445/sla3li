@@ -121,9 +121,11 @@ const toFlag = (v, fallback = 1) => {
 };
 const toCatId = (v) => { const n = parseInt(v); return isNaN(n) || n === 0 ? null : n; };
 
-// Create product (wholesaler)
-router.post('/', auth(['wholesaler']), upload.array('images', 5), (req, res) => {
-  if (!req.user.is_approved) return res.status(403).json({ message: 'Account pending approval' });
+// Create product (wholesaler or admin)
+router.post('/', auth(['wholesaler', 'admin']), upload.array('images', 5), (req, res) => {
+  if (req.user.role === 'wholesaler' && !req.user.is_approved) return res.status(403).json({ message: 'Account pending approval' });
+  const wholesalerId = req.user.role === 'admin' ? toInt(req.body.wholesaler_id) : toInt(req.user.id);
+  if (!wholesalerId) return res.status(400).json({ message: 'wholesaler_id is required' });
   console.log('POST /products body:', req.body, 'files:', req.files?.length, 'user:', req.user?.id);
   const { name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, category_id } = req.body;
   const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
@@ -131,7 +133,7 @@ router.post('/', auth(['wholesaler']), upload.array('images', 5), (req, res) => 
     INSERT INTO products (wholesaler_id, category_id, name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, images)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(
-    toInt(req.user.id),
+    wholesalerId,
     toCatId(category_id),
     toStr(name, 'Unnamed'),
     toStr(name_ar),

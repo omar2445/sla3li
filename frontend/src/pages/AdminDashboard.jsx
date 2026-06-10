@@ -33,6 +33,12 @@ export default function AdminDashboard() {
   const [imgNewFiles, setImgNewFiles] = useState([]);
   const [imgSaving, setImgSaving] = useState(false);
   const imgFileRef = useRef(null);
+  const [editProd, setEditProd] = useState(null);
+  const [prodForm, setProdForm] = useState({});
+  const [prodKeepImages, setProdKeepImages] = useState([]);
+  const [prodNewFiles, setProdNewFiles] = useState([]);
+  const [prodSaving, setProdSaving] = useState(false);
+  const prodFileRef = useRef(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -94,6 +100,41 @@ export default function AdminDashboard() {
     } catch (err) { toast.error(err.response?.data?.message || t.error); }
     finally { setImgSaving(false); }
   };
+  const openAddProd = () => {
+    const firstWholesaler = users.find(u => u.role === 'wholesaler');
+    setProdForm({ wholesaler_id: firstWholesaler?.id || '', name: '', name_ar: '', description: '', description_ar: '', price: '', min_order_qty: 1, unit: 'piece', unit_ar: 'قطعة', stock_qty: 0, category_id: '', is_active: 1 });
+    setProdKeepImages([]);
+    setProdNewFiles([]);
+    setEditProd('new');
+  };
+  const openEditProd = (p) => {
+    setProdForm({ name: p.name || '', name_ar: p.name_ar || '', description: p.description || '', description_ar: p.description_ar || '', price: p.price ?? '', min_order_qty: p.min_order_qty ?? 1, unit: p.unit || 'piece', unit_ar: p.unit_ar || 'قطعة', stock_qty: p.stock_qty ?? 0, category_id: p.category_id || '', is_active: p.is_active ?? 1 });
+    setProdKeepImages(Array.isArray(p.images) ? [...p.images] : []);
+    setProdNewFiles([]);
+    setEditProd(p);
+  };
+  const saveProd = async () => {
+    if (!prodForm.name || !String(prodForm.price)) return;
+    setProdSaving(true);
+    try {
+      const fd = new FormData();
+      Object.entries(prodForm).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') fd.append(k, v); });
+      prodNewFiles.forEach(f => fd.append('images', f));
+      if (editProd === 'new') {
+        await api.post('/products', fd);
+        toast.success('Product added');
+      } else {
+        fd.append('keep_images', JSON.stringify(prodKeepImages));
+        await api.put(`/products/${editProd.id}`, fd);
+        toast.success('Product updated');
+      }
+      const refreshed = await api.get('/admin/products');
+      setProducts(refreshed.data);
+      setEditProd(null);
+    } catch (err) { toast.error(err.response?.data?.message || t.error); }
+    finally { setProdSaving(false); }
+  };
+
   const addCategory = async () => { if (!newCat.name || !newCat.name_ar) return; try { await api.post('/categories', newCat); await api.get('/categories').then(r => setCategories(r.data)); setNewCat({ name: '', name_ar: '', icon: '📦', parent_id: null }); toast.success('Category added'); } catch { toast.error(t.error); } };
   const deleteCategory = async (id) => { try { await api.delete(`/categories/${id}`); setCategories(prev => prev.filter(c => c.id !== id)); toast.success('Deleted'); } catch { toast.error(t.error); } };
 
@@ -163,6 +204,92 @@ export default function AdminDashboard() {
               <button onClick={saveImages} disabled={imgSaving} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 {imgSaving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {lang === 'ar' ? 'حفظ الصور' : 'Save Images'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit product modal */}
+      {editProd && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setEditProd(null)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-bold text-slate-800">{editProd === 'new' ? (lang === 'ar' ? 'إضافة منتج' : 'Add Product') : (lang === 'ar' ? 'تعديل المنتج' : `Edit: ${editProd.name}`)}</h3>
+              <button onClick={() => setEditProd(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl"><X size={18} /></button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Wholesaler — only for new products */}
+              {editProd === 'new' && (
+                <div>
+                  <label className="label text-xs">{lang === 'ar' ? 'المورد (تاجر الجملة)' : 'Wholesaler'}</label>
+                  <select className="input text-sm" value={prodForm.wholesaler_id} onChange={e => setProdForm(f => ({ ...f, wholesaler_id: e.target.value }))}>
+                    {users.filter(u => u.role === 'wholesaler').map(u => <option key={u.id} value={u.id}>{u.business_name || u.name}</option>)}
+                    {users.filter(u => u.role === 'wholesaler').length === 0 && <option value="">No wholesalers found</option>}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="label text-xs">{lang === 'ar' ? 'الاسم (EN)' : 'Name (EN)'} *</label><input className="input text-sm" value={prodForm.name} onChange={e => setProdForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}</label><input className="input text-sm" dir="rtl" value={prodForm.name_ar} onChange={e => setProdForm(f => ({ ...f, name_ar: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'السعر (DZD)' : 'Price (DZD)'} *</label><input className="input text-sm" type="number" min="0" value={prodForm.price} onChange={e => setProdForm(f => ({ ...f, price: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'المخزون' : 'Stock Qty'}</label><input className="input text-sm" type="number" min="0" value={prodForm.stock_qty} onChange={e => setProdForm(f => ({ ...f, stock_qty: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'الحد الأدنى للطلب' : 'Min Order'}</label><input className="input text-sm" type="number" min="1" value={prodForm.min_order_qty} onChange={e => setProdForm(f => ({ ...f, min_order_qty: e.target.value }))} /></div>
+                <div>
+                  <label className="label text-xs">{lang === 'ar' ? 'الفئة' : 'Category'}</label>
+                  <select className="input text-sm" value={prodForm.category_id} onChange={e => setProdForm(f => ({ ...f, category_id: e.target.value }))}>
+                    <option value="">— {lang === 'ar' ? 'بدون فئة' : 'No category'} —</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                  </select>
+                </div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'الوحدة (EN)' : 'Unit (EN)'}</label><input className="input text-sm" value={prodForm.unit} onChange={e => setProdForm(f => ({ ...f, unit: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'الوحدة (AR)' : 'Unit (AR)'}</label><input className="input text-sm" dir="rtl" value={prodForm.unit_ar} onChange={e => setProdForm(f => ({ ...f, unit_ar: e.target.value }))} /></div>
+              </div>
+
+              <div><label className="label text-xs">{lang === 'ar' ? 'الوصف (EN)' : 'Description (EN)'}</label><textarea className="input text-sm h-16 resize-none" value={prodForm.description} onChange={e => setProdForm(f => ({ ...f, description: e.target.value }))} /></div>
+              <div><label className="label text-xs">{lang === 'ar' ? 'الوصف (AR)' : 'Description (AR)'}</label><textarea className="input text-sm h-16 resize-none" dir="rtl" value={prodForm.description_ar} onChange={e => setProdForm(f => ({ ...f, description_ar: e.target.value }))} /></div>
+
+              {/* Images */}
+              <div>
+                <label className="label text-xs mb-2 block">{lang === 'ar' ? 'الصور' : 'Images'} ({prodKeepImages.length + prodNewFiles.length}/5)</label>
+                <div className="flex flex-wrap gap-3">
+                  {prodKeepImages.map((url, i) => (
+                    <div key={url} className="relative group w-20 h-20 shrink-0">
+                      <img src={imgUrl(url)} alt="" className="w-full h-full object-cover rounded-xl border border-slate-200" />
+                      <button onClick={() => setProdKeepImages(prev => prev.filter((_, j) => j !== i))} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                    </div>
+                  ))}
+                  {prodNewFiles.map((file, i) => (
+                    <div key={i} className="relative group w-20 h-20 shrink-0">
+                      <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover rounded-xl border-2 border-primary-300" />
+                      <button onClick={() => setProdNewFiles(prev => prev.filter((_, j) => j !== i))} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                    </div>
+                  ))}
+                  {prodKeepImages.length + prodNewFiles.length < 5 && (
+                    <label className="w-20 h-20 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors shrink-0">
+                      <ImagePlus size={18} className="text-slate-400" />
+                      <input ref={prodFileRef} type="file" className="hidden" multiple accept="image/*" onChange={e => { const files = Array.from(e.target.files || []); const rem = 5 - prodKeepImages.length - prodNewFiles.length; setProdNewFiles(prev => [...prev, ...files.slice(0, rem)]); e.target.value = ''; }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Active toggle for edit */}
+              {editProd !== 'new' && (
+                <label className="flex items-center gap-2 cursor-pointer w-fit">
+                  <input type="checkbox" className="w-4 h-4 rounded" checked={!!prodForm.is_active} onChange={e => setProdForm(f => ({ ...f, is_active: e.target.checked ? 1 : 0 }))} />
+                  <span className="text-sm text-slate-600">{lang === 'ar' ? 'منتج نشط' : 'Active'}</span>
+                </label>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setEditProd(null)} className="btn-secondary flex-1">{t.cancel}</button>
+              <button onClick={saveProd} disabled={prodSaving || !prodForm.name || prodForm.price === ''} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                {prodSaving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                {lang === 'ar' ? 'حفظ' : 'Save'}
               </button>
             </div>
           </div>
@@ -309,6 +436,10 @@ export default function AdminDashboard() {
       {/* Products */}
       {tab === 'products' && (
         <div className="card overflow-x-auto">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm text-slate-500">{products.length} {lang === 'ar' ? 'منتج' : 'products'}</span>
+            <button onClick={openAddProd} className="btn-primary flex items-center gap-2 text-sm py-2 px-4"><Plus size={15} />{lang === 'ar' ? 'إضافة منتج' : 'Add Product'}</button>
+          </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50">
@@ -338,6 +469,7 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3 text-center">{p.is_active ? <span className="badge-green">Active</span> : <span className="badge-gray">Inactive</span>}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-1.5">
+                      <button onClick={() => openEditProd(p)} className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 font-medium transition-colors" title="Edit product">Edit</button>
                       <button
                         onClick={() => openImgModal(p)}
                         className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 font-medium transition-colors"
