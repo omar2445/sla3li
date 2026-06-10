@@ -4,7 +4,7 @@ import { ShoppingCart, Heart, ArrowLeft, MapPin, Package, Plus, Minus, Store } f
 import { useLang } from '../context/LangContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
+import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS = { delivered: 'badge-green', pending: 'badge-yellow', confirmed: 'badge-blue', processing: 'badge-orange', cancelled: 'badge-red' };
@@ -41,7 +41,7 @@ export default function ProductDetail() {
         <div>
           <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center overflow-hidden">
             {product.images?.[0] ? (
-              <img src={product.images[0]} alt={name} className="w-full h-full object-cover" />
+              <img src={imgUrl(product.images[0])} alt={name} className="w-full h-full object-cover" />
             ) : (
               <Package size={80} className="text-slate-300" />
             )}
