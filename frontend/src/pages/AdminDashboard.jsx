@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newCat, setNewCat] = useState({ name: '', name_ar: '', icon: '📦' });
+  const [newCat, setNewCat] = useState({ name: '', name_ar: '', icon: '📦', parent_id: null });
   const [filterRole, setFilterRole] = useState('');
   const [filterApproved, setFilterApproved] = useState('');
   const [search, setSearch] = useState('');
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
     } catch (err) { toast.error(err.response?.data?.message || t.error); }
     finally { setImgSaving(false); }
   };
-  const addCategory = async () => { if (!newCat.name || !newCat.name_ar) return; try { await api.post('/categories', newCat); await api.get('/categories').then(r => setCategories(r.data)); setNewCat({ name: '', name_ar: '', icon: '📦' }); toast.success('Category added'); } catch { toast.error(t.error); } };
+  const addCategory = async () => { if (!newCat.name || !newCat.name_ar) return; try { await api.post('/categories', newCat); await api.get('/categories').then(r => setCategories(r.data)); setNewCat({ name: '', name_ar: '', icon: '📦', parent_id: null }); toast.success('Category added'); } catch { toast.error(t.error); } };
   const deleteCategory = async (id) => { try { await api.delete(`/categories/${id}`); setCategories(prev => prev.filter(c => c.id !== id)); toast.success('Deleted'); } catch { toast.error(t.error); } };
 
   const tabs = [
@@ -380,30 +380,58 @@ export default function AdminDashboard() {
       )}
 
       {/* Categories */}
-      {tab === 'categories' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="card">
-            <h3 className="font-semibold text-slate-700 mb-4">{lang === 'ar' ? 'إضافة فئة جديدة' : 'Add Category'}</h3>
-            <div className="space-y-3">
-              <div><label className="label text-xs">{lang === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}</label><input className="input text-sm" value={newCat.name} onChange={e => setNewCat(c => ({ ...c, name: e.target.value }))} /></div>
-              <div><label className="label text-xs">{lang === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}</label><input className="input text-sm" dir="rtl" value={newCat.name_ar} onChange={e => setNewCat(c => ({ ...c, name_ar: e.target.value }))} /></div>
-              <div><label className="label text-xs">{lang === 'ar' ? 'الأيقونة' : 'Icon (emoji)'}</label><input className="input text-sm" value={newCat.icon} onChange={e => setNewCat(c => ({ ...c, icon: e.target.value }))} /></div>
-              <button onClick={addCategory} className="btn-primary w-full flex items-center justify-center gap-2"><Plus size={16} />{lang === 'ar' ? 'إضافة' : 'Add'}</button>
-            </div>
-          </div>
-          <div className="card">
-            <h3 className="font-semibold text-slate-700 mb-4">{lang === 'ar' ? 'الفئات الحالية' : 'Existing Categories'} ({categories.length})</h3>
-            <div className="space-y-2">
-              {categories.map(c => (
-                <div key={c.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                  <span className="flex items-center gap-2"><span>{c.icon}</span><span className="font-medium text-sm">{c.name}</span><span className="text-slate-400 text-xs">/ {c.name_ar}</span></span>
-                  <button onClick={() => deleteCategory(c.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+      {tab === 'categories' && (() => {
+        const topLevel = categories.filter(c => !c.parent_id);
+        const subs = categories.filter(c => c.parent_id);
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="card">
+              <h3 className="font-semibold text-slate-700 mb-4">{lang === 'ar' ? 'إضافة فئة جديدة' : 'Add Category'}</h3>
+              <div className="space-y-3">
+                <div><label className="label text-xs">{lang === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}</label><input className="input text-sm" value={newCat.name} onChange={e => setNewCat(c => ({ ...c, name: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}</label><input className="input text-sm" dir="rtl" value={newCat.name_ar} onChange={e => setNewCat(c => ({ ...c, name_ar: e.target.value }))} /></div>
+                <div><label className="label text-xs">{lang === 'ar' ? 'الأيقونة' : 'Icon (emoji)'}</label><input className="input text-sm" value={newCat.icon} onChange={e => setNewCat(c => ({ ...c, icon: e.target.value }))} /></div>
+                <div>
+                  <label className="label text-xs">{lang === 'ar' ? 'الفئة الأم (اختياري)' : 'Parent Category (optional)'}</label>
+                  <select className="input text-sm" value={newCat.parent_id ?? ''} onChange={e => setNewCat(c => ({ ...c, parent_id: e.target.value ? Number(e.target.value) : null }))}>
+                    <option value="">{lang === 'ar' ? '— فئة رئيسية —' : '— Top-level category —'}</option>
+                    {topLevel.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
+                  </select>
                 </div>
-              ))}
+                <button onClick={addCategory} className="btn-primary w-full flex items-center justify-center gap-2"><Plus size={16} />{lang === 'ar' ? 'إضافة' : 'Add'}</button>
+              </div>
+            </div>
+            <div className="card">
+              <h3 className="font-semibold text-slate-700 mb-4">{lang === 'ar' ? 'الفئات الحالية' : 'Existing Categories'} ({categories.length})</h3>
+              <div className="space-y-0">
+                {topLevel.map(p => {
+                  const children = subs.filter(s => s.parent_id === p.id);
+                  return (
+                    <div key={p.id}>
+                      <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                        <span className="flex items-center gap-2"><span>{p.icon}</span><span className="font-medium text-sm">{p.name}</span><span className="text-slate-400 text-xs">/ {p.name_ar}</span></span>
+                        <button onClick={() => deleteCategory(p.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+                      </div>
+                      {children.map(s => (
+                        <div key={s.id} className="flex items-center justify-between py-1.5 pl-7 border-b border-slate-50 bg-slate-50/50">
+                          <span className="flex items-center gap-2 text-slate-500"><span className="text-slate-300 text-xs">└</span><span>{s.icon}</span><span className="text-sm">{s.name}</span><span className="text-slate-400 text-xs">/ {s.name_ar}</span></span>
+                          <button onClick={() => deleteCategory(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                {subs.filter(s => !categories.find(p => p.id === s.parent_id)).map(s => (
+                  <div key={s.id} className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="flex items-center gap-2"><span>{s.icon}</span><span className="font-medium text-sm">{s.name}</span><span className="text-slate-400 text-xs">/ {s.name_ar}</span></span>
+                    <button onClick={() => deleteCategory(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
