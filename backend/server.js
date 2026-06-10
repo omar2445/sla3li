@@ -35,7 +35,7 @@ app.use('/api/categories', require('./routes/categories'));
 app.use('/api/delivery', require('./routes/delivery'));
 app.use('/api/admin', require('./routes/admin'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.0.0', platform: 'Sla3Li' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.1.0', platform: 'Sla3Li' }));
 
 app.use((err, req, res, next) => {
   console.error('GLOBAL ERROR:', err.stack);

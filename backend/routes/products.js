@@ -154,6 +154,7 @@ router.put('/:id', auth(['wholesaler', 'admin']), upload.array('images', 5), (re
   if (req.user.role === 'wholesaler' && product.wholesaler_id !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
 
   const { name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, category_id, is_active } = req.body;
+  console.log('PUT /products body:', req.body, 'files:', req.files?.length, 'user:', req.user?.id);
 
   const newFiles = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
   let images;
