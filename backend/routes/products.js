@@ -109,15 +109,41 @@ router.get('/:id', (req, res) => {
   res.json(product);
 });
 
+// Safe type helpers — node:sqlite rejects undefined and boolean
+const toInt  = (v, fallback = 0) => { const n = parseInt(v);  return isNaN(n) ? fallback : n; };
+const toFloat= (v, fallback = 0) => { const n = parseFloat(v);return isNaN(n) ? fallback : n; };
+const toStr  = (v, fallback = '') => (v === undefined || v === null) ? fallback : String(v);
+const toFlag = (v, fallback = 1) => {
+  if (v === undefined || v === null) return fallback;
+  if (v === true  || v === 1 || v === '1') return 1;
+  if (v === false || v === 0 || v === '0') return 0;
+  return fallback;
+};
+const toCatId = (v) => { const n = parseInt(v); return isNaN(n) || n === 0 ? null : n; };
+
 // Create product (wholesaler)
 router.post('/', auth(['wholesaler']), upload.array('images', 5), (req, res) => {
   if (!req.user.is_approved) return res.status(403).json({ message: 'Account pending approval' });
+  console.log('POST /products body:', req.body, 'files:', req.files?.length, 'user:', req.user?.id);
   const { name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, category_id } = req.body;
   const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
   const result = db.prepare(`
     INSERT INTO products (wholesaler_id, category_id, name, name_ar, description, description_ar, price, min_order_qty, unit, unit_ar, stock_qty, images)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-  `).run(req.user.id, category_id || null, name, name_ar || '', description || '', description_ar || '', parseFloat(price), parseInt(min_order_qty) || 1, unit || 'piece', unit_ar || 'قطعة', parseInt(stock_qty) || 0, JSON.stringify(images));
+  `).run(
+    toInt(req.user.id),
+    toCatId(category_id),
+    toStr(name, 'Unnamed'),
+    toStr(name_ar),
+    toStr(description),
+    toStr(description_ar),
+    toFloat(price),
+    toInt(min_order_qty, 1),
+    toStr(unit, 'piece'),
+    toStr(unit_ar, 'قطعة'),
+    toInt(stock_qty),
+    JSON.stringify(images)
+  );
   res.status(201).json({ id: Number(result.lastInsertRowid), message: 'Product created' });
 });
 
@@ -132,18 +158,30 @@ router.put('/:id', auth(['wholesaler', 'admin']), upload.array('images', 5), (re
   const newFiles = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
   let images;
   if (req.body.keep_images !== undefined) {
-    // FormData upload — use explicit keep list + new uploads
     let keepImages = [];
     try { keepImages = JSON.parse(req.body.keep_images); } catch {}
     images = [...keepImages, ...newFiles];
   } else {
-    // JSON request (e.g. toggleActive) — preserve existing images
     images = JSON.parse(product.images || '[]');
   }
 
   db.prepare(`
     UPDATE products SET name=?, name_ar=?, description=?, description_ar=?, price=?, min_order_qty=?, unit=?, unit_ar=?, stock_qty=?, category_id=?, is_active=?, images=?, updated_at=datetime('now') WHERE id=?
-  `).run(name, name_ar || '', description || '', description_ar || '', parseFloat(price), parseInt(min_order_qty) || 1, unit || 'piece', unit_ar || '', parseInt(stock_qty) || 0, category_id || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, JSON.stringify(images), parseInt(req.params.id));
+  `).run(
+    toStr(name,         product.name),
+    toStr(name_ar,      product.name_ar || ''),
+    toStr(description,  product.description || ''),
+    toStr(description_ar, product.description_ar || ''),
+    toFloat(price,      product.price),
+    toInt(min_order_qty,product.min_order_qty),
+    toStr(unit,         product.unit),
+    toStr(unit_ar,      product.unit_ar || ''),
+    toInt(stock_qty,    product.stock_qty),
+    toCatId(category_id) ?? product.category_id ?? null,
+    toFlag(is_active,   product.is_active),
+    JSON.stringify(images),
+    parseInt(req.params.id)
+  );
   res.json({ message: 'Product updated' });
 });
 
