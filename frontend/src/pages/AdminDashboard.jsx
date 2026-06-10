@@ -85,7 +85,7 @@ export default function AdminDashboard() {
       fd.append('is_active', imgProduct.is_active ?? 1);
       fd.append('keep_images', JSON.stringify(imgExisting));
       imgNewFiles.forEach(f => fd.append('images', f));
-      await api.put(`/products/${imgProduct.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.put(`/products/${imgProduct.id}`, fd);
       const allImages = [...imgExisting, ...imgNewFiles.map(() => '')]; // placeholder; refetch for real URLs
       const refreshed = await api.get('/admin/products');
       setProducts(refreshed.data);

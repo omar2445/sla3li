@@ -25,7 +25,7 @@ function DocSlot({ label, labelAr, field, current, lang, onSave }) {
     try {
       const fd = new FormData();
       fd.append(field, file);
-      await api.put('/auth/documents', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.put('/auth/documents', fd);
       toast.success(lang === 'ar' ? 'تم تحديث المستند' : 'Document updated');
       onSave();
       setFile(null);
@@ -115,7 +115,7 @@ export default function ProfilePage() {
     try {
       const fd = new FormData();
       fd.append('avatar', file);
-      await api.put('/auth/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.put('/auth/avatar', fd);
       await fetchProfile();
       toast.success(lang === 'ar' ? 'تم تحديث الصورة الشخصية' : 'Profile photo updated');
     } catch { toast.error('Error uploading photo'); }

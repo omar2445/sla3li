@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (formData) => {
     const isFormData = formData instanceof FormData;
-    const { data } = await api.post('/auth/register', formData, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {});
+    const { data } = await api.post('/auth/register', formData);
     api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
     localStorage.setItem('sla3li_token', data.token);
     localStorage.setItem('sla3li_user', JSON.stringify(data.user));
