@@ -1,16 +1,9 @@
 const express = require('express');
+require('express-async-errors'); // lets async route errors reach the global handler
 const cors = require('cors');
-const path = require('path');
 require('dotenv').config();
 
-// Initialize DB (creates tables if needed)
 const db = require('./db/database');
-
-// Auto-seed on first start if no users exist
-const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get();
-if (userCount.c === 0) {
-  try { require('./db/seed'); } catch (e) { console.error('Seed error:', e.message); }
-}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,14 +28,26 @@ app.use('/api/categories', require('./routes/categories'));
 app.use('/api/delivery', require('./routes/delivery'));
 app.use('/api/admin', require('./routes/admin'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.1.0', platform: 'Sla3Li' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.2.0', platform: 'Sla3Li', db: db.backendName }));
 
 app.use((err, req, res, next) => {
   console.error('GLOBAL ERROR:', err.stack);
   res.status(500).json({ message: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Sla3Li API running on http://localhost:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health\n`);
-});
+async function start() {
+  await db.ready;
+
+  // Auto-seed on first start if no users exist
+  const userCount = await db.prepare('SELECT COUNT(*) as c FROM users').get();
+  if (userCount.c === 0) {
+    try { await require('./db/seed')(); } catch (e) { console.error('Seed error:', e.message); }
+  }
+
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Sla3Li API running on http://localhost:${PORT}`);
+    console.log(`   Database: ${db.backendName} | Health: http://localhost:${PORT}/api/health\n`);
+  });
+}
+
+start().catch(err => { console.error('FATAL STARTUP ERROR:', err); process.exit(1); });

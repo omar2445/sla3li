@@ -4,8 +4,8 @@ const db = require('../db/database');
 const auth = require('../middleware/auth');
 
 // Get available deliveries (unassigned)
-router.get('/available', auth(['driver']), (req, res) => {
-  const deliveries = db.prepare(`
+router.get('/available', auth(['driver']), async (req, res) => {
+  const deliveries = await db.prepare(`
     SELECT d.*, o.total_amount, o.delivery_address, r.name as retailer_name, r.phone as retailer_phone,
            w.name as wholesaler_name, w.address as pickup_address_auto
     FROM deliveries d
@@ -19,8 +19,8 @@ router.get('/available', auth(['driver']), (req, res) => {
 });
 
 // My deliveries (driver)
-router.get('/my', auth(['driver']), (req, res) => {
-  const deliveries = db.prepare(`
+router.get('/my', auth(['driver']), async (req, res) => {
+  const deliveries = await db.prepare(`
     SELECT d.*, o.total_amount, o.delivery_address, r.name as retailer_name, r.phone as retailer_phone, r.address as retailer_address,
            w.name as wholesaler_name, w.business_name, w.address as wholesaler_address, w.phone as wholesaler_phone
     FROM deliveries d
@@ -34,30 +34,30 @@ router.get('/my', auth(['driver']), (req, res) => {
 });
 
 // Accept delivery
-router.patch('/:id/accept', auth(['driver']), (req, res) => {
-  const d = db.prepare('SELECT * FROM deliveries WHERE id = ?').get(req.params.id);
+router.patch('/:id/accept', auth(['driver']), async (req, res) => {
+  const d = await db.prepare('SELECT * FROM deliveries WHERE id = ?').get(req.params.id);
   if (!d) return res.status(404).json({ message: 'Not found' });
   if (d.driver_id) return res.status(400).json({ message: 'Already taken' });
-  db.prepare("UPDATE deliveries SET driver_id=?, status='assigned', updated_at=datetime('now') WHERE id=?").run(req.user.id, req.params.id);
+  await db.prepare("UPDATE deliveries SET driver_id=?, status='assigned', updated_at=datetime('now') WHERE id=?").run(req.user.id, req.params.id);
   res.json({ message: 'Delivery accepted' });
 });
 
 // Update delivery status
-router.patch('/:id/status', auth(['driver', 'admin']), (req, res) => {
+router.patch('/:id/status', auth(['driver', 'admin']), async (req, res) => {
   const { status } = req.body;
   const validStatuses = ['picked_up', 'in_transit', 'delivered', 'failed'];
   if (!validStatuses.includes(status)) return res.status(400).json({ message: 'Invalid status' });
 
-  const d = db.prepare('SELECT * FROM deliveries WHERE id = ?').get(req.params.id);
+  const d = await db.prepare('SELECT * FROM deliveries WHERE id = ?').get(req.params.id);
   if (!d) return res.status(404).json({ message: 'Not found' });
   if (req.user.role === 'driver' && d.driver_id !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
 
-  db.prepare("UPDATE deliveries SET status=?, updated_at=datetime('now') WHERE id=?").run(status, req.params.id);
+  await db.prepare("UPDATE deliveries SET status=?, updated_at=datetime('now') WHERE id=?").run(status, req.params.id);
 
   if (status === 'delivered') {
-    db.prepare("UPDATE orders SET status='delivered', updated_at=datetime('now') WHERE id=?").run(d.order_id);
-    const order = db.prepare('SELECT * FROM orders WHERE id=?').get(d.order_id);
-    db.prepare('INSERT INTO notifications (user_id, title, title_ar, message, message_ar, type) VALUES (?,?,?,?,?,?)')
+    await db.prepare("UPDATE orders SET status='delivered', updated_at=datetime('now') WHERE id=?").run(d.order_id);
+    const order = await db.prepare('SELECT * FROM orders WHERE id=?').get(d.order_id);
+    await db.prepare('INSERT INTO notifications (user_id, title, title_ar, message, message_ar, type) VALUES (?,?,?,?,?,?)')
       .run(order.retailer_id, 'Order Delivered', 'تم التوصيل', `Your order #${d.order_id} has been delivered!`, `تم توصيل طلبك رقم #${d.order_id}!`, 'success');
   }
 
@@ -65,8 +65,8 @@ router.patch('/:id/status', auth(['driver', 'admin']), (req, res) => {
 });
 
 // Track delivery by order ID (retailer)
-router.get('/track/:order_id', auth(), (req, res) => {
-  const delivery = db.prepare(`
+router.get('/track/:order_id', auth(), async (req, res) => {
+  const delivery = await db.prepare(`
     SELECT d.*, u.name as driver_name, u.phone as driver_phone FROM deliveries d LEFT JOIN users u ON d.driver_id = u.id WHERE d.order_id = ?
   `).get(req.params.order_id);
   if (!delivery) return res.status(404).json({ message: 'Delivery not found' });

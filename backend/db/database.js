@@ -1,21 +1,60 @@
-const { DatabaseSync } = require('node:sqlite');
+// Async database adapter.
+// - Turso (hosted libSQL) when TURSO_DATABASE_URL is set — survives Render
+//   redeploys/restarts, whose local disk is wiped every time
+// - Local SQLite file via node:sqlite otherwise — zero-setup local dev
+//
+// Interface (all async): db.prepare(sql).get(...args) / .all(...args) / .run(...args),
+// db.exec(sql), and db.ready (promise that resolves once schema is in place).
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../backend/.env') });
-const { dbPath } = require('../config/paths');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-const db = new DatabaseSync(dbPath);
+let backend;
 
-db.exec("PRAGMA journal_mode=WAL");
-db.exec("PRAGMA foreign_keys=ON");
+if (process.env.TURSO_DATABASE_URL) {
+  const { createClient } = require('@libsql/client');
+  const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
+  const toObjects = (rs) => rs.rows.map(row => Object.fromEntries(rs.columns.map((c, i) => [c, row[i]])));
+  backend = {
+    name: 'turso',
+    exec: (sql) => client.executeMultiple(sql),
+    get: async (sql, args) => toObjects(await client.execute({ sql, args }))[0],
+    all: async (sql, args) => toObjects(await client.execute({ sql, args })),
+    run: async (sql, args) => {
+      const rs = await client.execute({ sql, args });
+      return { lastInsertRowid: Number(rs.lastInsertRowid ?? 0), changes: rs.rowsAffected };
+    },
+  };
+} else {
+  const { DatabaseSync } = require('node:sqlite');
+  const { dbPath } = require('../config/paths');
+  const sqlite = new DatabaseSync(dbPath);
 
-// Merge WAL into the main db file regularly so data never lives only in the
-// journal — limits damage if files are copied/synced/restored externally.
-db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
-setInterval(() => {
-  try { db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch {}
-}, 60_000).unref();
+  sqlite.exec("PRAGMA journal_mode=WAL");
+  sqlite.exec("PRAGMA foreign_keys=ON");
 
-db.exec(`
+  // Merge WAL into the main db file regularly so data never lives only in the
+  // journal — limits damage if files are copied/synced/restored externally.
+  sqlite.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+  setInterval(() => {
+    try { sqlite.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch {}
+  }, 60_000).unref();
+
+  backend = {
+    name: 'local',
+    exec: async (sql) => sqlite.exec(sql),
+    get: async (sql, args) => sqlite.prepare(sql).get(...args),
+    all: async (sql, args) => sqlite.prepare(sql).all(...args),
+    run: async (sql, args) => {
+      const r = sqlite.prepare(sql).run(...args);
+      return { lastInsertRowid: Number(r.lastInsertRowid), changes: Number(r.changes) };
+    },
+  };
+}
+
+const SCHEMA = `
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -114,20 +153,37 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE(retailer_id, product_id)
   );
-`);
+`;
 
-// Migration: add document columns if they don't exist yet
-['id_image', 'license_image', 'gray_card_image'].forEach(col => {
-  try { db.exec(`ALTER TABLE users ADD COLUMN ${col} TEXT DEFAULT ''`); } catch {}
-});
+async function init() {
+  await backend.exec(SCHEMA);
 
-// Migration: ensure new categories exist
-[
-  ['Hardware & Tools', 'أدوات ومعدات', '🔧'],
-  ['Accessories',      'إكسسوارات',    '👜'],
-].forEach(([name, name_ar, icon]) => {
-  const exists = db.prepare('SELECT id FROM categories WHERE name = ?').get(name);
-  if (!exists) db.prepare('INSERT INTO categories (name, name_ar, icon) VALUES (?,?,?)').run(name, name_ar, icon);
-});
+  // Migration: add document columns if they don't exist yet
+  for (const col of ['id_image', 'license_image', 'gray_card_image']) {
+    try { await backend.exec(`ALTER TABLE users ADD COLUMN ${col} TEXT DEFAULT ''`); } catch {}
+  }
 
-module.exports = db;
+  // Migration: ensure new categories exist
+  for (const [name, name_ar, icon] of [
+    ['Hardware & Tools', 'أدوات ومعدات', '🔧'],
+    ['Accessories',      'إكسسوارات',    '👜'],
+  ]) {
+    const exists = await backend.get('SELECT id FROM categories WHERE name = ?', [name]);
+    if (!exists) await backend.run('INSERT INTO categories (name, name_ar, icon) VALUES (?,?,?)', [name, name_ar, icon]);
+  }
+
+  console.log(`Database ready (${backend.name})`);
+}
+
+const ready = init();
+
+module.exports = {
+  ready,
+  backendName: backend.name,
+  prepare: (sql) => ({
+    get: async (...args) => { await ready; return backend.get(sql, args); },
+    all: async (...args) => { await ready; return backend.all(sql, args); },
+    run: async (...args) => { await ready; return backend.run(sql, args); },
+  }),
+  exec: async (sql) => { await ready; return backend.exec(sql); },
+};
