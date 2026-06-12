@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { MapPin, Phone, Package, ArrowLeft, Store } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import ProductCard from '../components/ProductCard';
+import Stars from '../components/Stars';
 import api from '../api/axios';
 
 export default function SupplierProfile() {
@@ -29,6 +30,12 @@ export default function SupplierProfile() {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" /></div>;
 
   const supplierName = supplier?.business_name || supplier?.name || (lang === 'ar' ? 'مورد' : 'Supplier');
+
+  // Overall supplier rating: weighted average across all their rated products
+  const totalRatings = products.reduce((s, p) => s + (p.rating_count || 0), 0);
+  const supplierRating = totalRatings > 0
+    ? products.reduce((s, p) => s + (p.avg_rating || 0) * (p.rating_count || 0), 0) / totalRatings
+    : 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -57,6 +64,7 @@ export default function SupplierProfile() {
             <div className="flex items-center gap-3 mt-3">
               <span className="badge-green">{lang === 'ar' ? 'مورد موثق' : 'Verified Supplier'}</span>
               <span className="text-xs text-slate-400">{products.length} {lang === 'ar' ? 'منتجات' : 'products'}</span>
+              {totalRatings > 0 && <Stars value={supplierRating} count={totalRatings} size={15} />}
             </div>
           </div>
         </div>

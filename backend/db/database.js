@@ -153,6 +153,16 @@ const SCHEMA = `
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE(retailer_id, product_id)
   );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    retailer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
+    comment TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(product_id, retailer_id)
+  );
 `;
 
 async function init() {

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, MapPin, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
+import Stars from './Stars';
 import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -19,7 +21,18 @@ export default function ProductCard({ product, onFavoriteToggle }) {
 
   const name = lang === 'ar' && product.name_ar ? product.name_ar : product.name;
   const supplier = product.business_name || product.wholesaler_name || '';
-  const image = Array.isArray(product.images) && product.images[0] ? imgUrl(product.images[0]) : null;
+  const images = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+  const [imgIdx, setImgIdx] = useState(0);
+  const image = images[imgIdx] ? imgUrl(images[imgIdx]) : null;
+
+  // Moving the mouse across the image previews the other images
+  const handleImgHover = (e) => {
+    if (images.length < 2) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const idx = Math.min(images.length - 1, Math.max(0, Math.floor((x / rect.width) * images.length)));
+    setImgIdx(idx);
+  };
 
   const handleFavorite = async (e) => {
     e.preventDefault();
@@ -40,11 +53,22 @@ export default function ProductCard({ product, onFavoriteToggle }) {
   return (
     <div className="card-hover flex flex-col group">
       <Link to={`/product/${product.id}`} className="flex-1">
-        <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl mb-4 overflow-hidden flex items-center justify-center">
+        <div
+          className="relative aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl mb-4 overflow-hidden flex items-center justify-center"
+          onMouseMove={handleImgHover}
+          onMouseLeave={() => setImgIdx(0)}
+        >
           {image ? (
             <img src={image} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           ) : (
             <Package size={36} className="text-slate-300" />
+          )}
+          {images.length > 1 && (
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              {images.map((_, i) => (
+                <span key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === imgIdx ? 'bg-white shadow' : 'bg-white/50'}`} />
+              ))}
+            </div>
           )}
         </div>
 
@@ -55,6 +79,8 @@ export default function ProductCard({ product, onFavoriteToggle }) {
             </span>
           )}
           <h3 className="font-semibold text-slate-800 line-clamp-2 text-sm leading-snug">{name}</h3>
+
+          {product.rating_count > 0 && <Stars value={product.avg_rating} count={product.rating_count} size={13} />}
 
           {supplier && (
             <p className="text-xs text-slate-500 flex items-center gap-1">

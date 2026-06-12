@@ -63,10 +63,12 @@ router.get('/', async (req, res) => {
 
   const total = await db.prepare(`SELECT COUNT(*) as count FROM products p JOIN users u ON p.wholesaler_id = u.id LEFT JOIN categories c ON p.category_id = c.id ${whereStr}`).get(...params);
   const products = await db.prepare(`
-    SELECT p.*, u.name as wholesaler_name, u.business_name, u.wilaya, c.name as category_name, c.name_ar as category_name_ar
+    SELECT p.*, u.name as wholesaler_name, u.business_name, u.wilaya, c.name as category_name, c.name_ar as category_name_ar,
+           COALESCE(rv.avg_rating, 0) as avg_rating, COALESCE(rv.rating_count, 0) as rating_count
     FROM products p
     JOIN users u ON p.wholesaler_id = u.id
     LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN (SELECT product_id, AVG(rating) as avg_rating, COUNT(*) as rating_count FROM reviews GROUP BY product_id) rv ON rv.product_id = p.id
     ${whereStr}
     ORDER BY p.created_at DESC
     LIMIT ? OFFSET ?
@@ -80,15 +82,46 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const product = await db.prepare(`
     SELECT p.*, u.name as wholesaler_name, u.business_name, u.business_name_ar, u.wilaya, u.phone as wholesaler_phone,
-           c.name as category_name, c.name_ar as category_name_ar
+           c.name as category_name, c.name_ar as category_name_ar,
+           COALESCE(rv.avg_rating, 0) as avg_rating, COALESCE(rv.rating_count, 0) as rating_count
     FROM products p
     JOIN users u ON p.wholesaler_id = u.id
     LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN (SELECT product_id, AVG(rating) as avg_rating, COUNT(*) as rating_count FROM reviews GROUP BY product_id) rv ON rv.product_id = p.id
     WHERE p.id = ?
   `).get(parseInt(req.params.id));
   if (!product) return res.status(404).json({ message: 'Product not found' });
   product.images = JSON.parse(product.images || '[]');
+  product.reviews = await db.prepare(`
+    SELECT r.rating, r.comment, r.created_at, u.name as retailer_name
+    FROM reviews r JOIN users u ON r.retailer_id = u.id
+    WHERE r.product_id = ? ORDER BY r.created_at DESC LIMIT 20
+  `).all(product.id);
+  const wr = await db.prepare(`
+    SELECT AVG(r.rating) as avg, COUNT(*) as cnt FROM reviews r JOIN products p ON r.product_id = p.id WHERE p.wholesaler_id = ?
+  `).get(product.wholesaler_id);
+  product.wholesaler_rating = wr?.avg || 0;
+  product.wholesaler_rating_count = wr?.cnt || 0;
   res.json(product);
+});
+
+// My rating for a product (retailer)
+router.get('/:id/my-rating', auth(['retailer']), async (req, res) => {
+  const r = await db.prepare('SELECT rating, comment FROM reviews WHERE product_id = ? AND retailer_id = ?').get(parseInt(req.params.id), req.user.id);
+  res.json(r || null);
+});
+
+// Rate a product (retailer) — one rating per retailer, updates on re-submit
+router.post('/:id/rating', auth(['retailer']), async (req, res) => {
+  const rating = parseInt(req.body.rating);
+  if (!rating || rating < 1 || rating > 5) return res.status(400).json({ message: 'Rating must be 1-5' });
+  const product = await db.prepare('SELECT id FROM products WHERE id = ?').get(parseInt(req.params.id));
+  if (!product) return res.status(404).json({ message: 'Product not found' });
+  await db.prepare(`
+    INSERT INTO reviews (product_id, retailer_id, rating, comment) VALUES (?,?,?,?)
+    ON CONFLICT(product_id, retailer_id) DO UPDATE SET rating=excluded.rating, comment=excluded.comment, created_at=datetime('now')
+  `).run(product.id, req.user.id, rating, String(req.body.comment || ''));
+  res.status(201).json({ message: 'Rating saved' });
 });
 
 // Safe type helpers — SQLite drivers reject undefined and boolean

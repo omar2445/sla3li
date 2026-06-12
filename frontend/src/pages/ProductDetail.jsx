@@ -4,6 +4,7 @@ import { ShoppingCart, Heart, ArrowLeft, MapPin, Package, Plus, Minus, Store } f
 import { useLang } from '../context/LangContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import Stars from '../components/Stars';
 import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -17,10 +18,34 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [imgIdx, setImgIdx] = useState(0);
+  const [myRating, setMyRating] = useState(0);
+  const [myComment, setMyComment] = useState('');
+  const [ratingSaving, setRatingSaving] = useState(false);
+
+  const fetchProduct = () =>
+    api.get(`/products/${id}`).then(({ data }) => { setProduct(data); setQty(data.min_order_qty || 1); setLoading(false); }).catch(() => setLoading(false));
 
   useEffect(() => {
-    api.get(`/products/${id}`).then(({ data }) => { setProduct(data); setQty(data.min_order_qty || 1); setLoading(false); }).catch(() => setLoading(false));
+    setImgIdx(0);
+    fetchProduct();
+    if (user?.role === 'retailer') {
+      api.get(`/products/${id}/my-rating`).then(({ data }) => {
+        if (data) { setMyRating(data.rating); setMyComment(data.comment || ''); }
+      }).catch(() => {});
+    }
   }, [id]);
+
+  const submitRating = async (ratingValue) => {
+    setMyRating(ratingValue);
+    setRatingSaving(true);
+    try {
+      await api.post(`/products/${id}/rating`, { rating: ratingValue, comment: myComment });
+      toast.success(lang === 'ar' ? 'تم حفظ التقييم' : 'Rating saved');
+      fetchProduct();
+    } catch { toast.error(t.error || 'Error'); }
+    finally { setRatingSaving(false); }
+  };
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" /></div>;
   if (!product) return <div className="text-center py-20 text-slate-400"><p>{lang === 'ar' ? 'المنتج غير موجود' : 'Product not found'}</p></div>;
@@ -37,15 +62,29 @@ export default function ProductDetail() {
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Image */}
+        {/* Image gallery */}
         <div>
           <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center overflow-hidden">
-            {product.images?.[0] ? (
-              <img src={imgUrl(product.images[0])} alt={name} className="w-full h-full object-cover" />
+            {product.images?.[imgIdx] ? (
+              <img src={imgUrl(product.images[imgIdx])} alt={name} className="w-full h-full object-cover" />
             ) : (
               <Package size={80} className="text-slate-300" />
             )}
           </div>
+          {product.images?.length > 1 && (
+            <div className="flex gap-2 mt-3">
+              {product.images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setImgIdx(i)}
+                  onMouseEnter={() => setImgIdx(i)}
+                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${i === imgIdx ? 'border-primary-500' : 'border-transparent hover:border-slate-300'}`}
+                >
+                  <img src={imgUrl(img)} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -57,6 +96,12 @@ export default function ProductDetail() {
           )}
 
           <h1 className="text-2xl font-bold text-slate-800">{name}</h1>
+
+          {product.rating_count > 0 ? (
+            <Stars value={product.avg_rating} count={product.rating_count} size={18} />
+          ) : (
+            <p className="text-xs text-slate-400">{lang === 'ar' ? 'لا توجد تقييمات بعد' : 'No ratings yet'}</p>
+          )}
 
           <div className="flex items-center gap-3">
             <span className="text-3xl font-bold text-slate-900">{product.price?.toLocaleString()} <span className="text-base font-normal text-slate-500">DZD</span></span>
@@ -86,6 +131,7 @@ export default function ProductDetail() {
             <div>
               <p className="font-semibold text-slate-800 group-hover:text-primary-700">{supplier}</p>
               {product.wilaya && <p className="text-xs text-slate-400 flex items-center gap-1"><MapPin size={10} />{product.wilaya}</p>}
+              {product.wholesaler_rating_count > 0 && <Stars value={product.wholesaler_rating} count={product.wholesaler_rating_count} size={12} />}
             </div>
           </Link>
 
@@ -117,6 +163,54 @@ export default function ProductDetail() {
             <Link to="/login" className="btn-primary w-full text-center block py-3">{lang === 'ar' ? 'سجّل الدخول للطلب' : 'Login to Order'}</Link>
           )}
         </div>
+      </div>
+
+      {/* Reviews */}
+      <div className="mt-12 max-w-3xl">
+        <h2 className="text-xl font-bold text-slate-800 mb-5">
+          {lang === 'ar' ? 'التقييمات' : 'Reviews'} <span className="text-slate-400 font-normal text-base">({product.rating_count || 0})</span>
+        </h2>
+
+        {user?.role === 'retailer' && (
+          <div className="card mb-6">
+            <p className="font-semibold text-slate-700 text-sm mb-2">{lang === 'ar' ? 'قيّم هذا المنتج' : 'Rate this product'}</p>
+            <div className="flex items-center gap-3 mb-3">
+              <Stars value={myRating} size={26} onRate={submitRating} />
+              {ratingSaving && <span className="w-4 h-4 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin" />}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="input text-sm flex-1"
+                placeholder={lang === 'ar' ? 'أضف تعليقاً (اختياري)' : 'Add a comment (optional)'}
+                value={myComment}
+                onChange={e => setMyComment(e.target.value)}
+              />
+              <button
+                onClick={() => myRating ? submitRating(myRating) : toast.error(lang === 'ar' ? 'اختر عدد النجوم أولاً' : 'Pick a star rating first')}
+                className="btn-secondary text-sm px-4"
+              >
+                {lang === 'ar' ? 'حفظ' : 'Save'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(!product.reviews || product.reviews.length === 0) ? (
+          <p className="text-slate-400 text-sm">{lang === 'ar' ? 'لا توجد تقييمات بعد — كن أول من يقيّم!' : 'No reviews yet — be the first to rate!'}</p>
+        ) : (
+          <div className="space-y-4">
+            {product.reviews.map((r, i) => (
+              <div key={i} className="card py-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="font-semibold text-slate-700 text-sm">{r.retailer_name}</p>
+                  <Stars value={r.rating} size={13} />
+                </div>
+                {r.comment && <p className="text-slate-600 text-sm">{r.comment}</p>}
+                <p className="text-xs text-slate-400 mt-1">{new Date(r.created_at).toLocaleDateString()}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
