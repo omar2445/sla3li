@@ -1,12 +1,19 @@
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../backend/.env') });
+const { dbPath } = require('../config/paths');
 
-const dbPath = path.resolve(__dirname, 'sla3li.db');
 const db = new DatabaseSync(dbPath);
 
 db.exec("PRAGMA journal_mode=WAL");
 db.exec("PRAGMA foreign_keys=ON");
+
+// Merge WAL into the main db file regularly so data never lives only in the
+// journal — limits damage if files are copied/synced/restored externally.
+db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+setInterval(() => {
+  try { db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch {}
+}, 60_000).unref();
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
