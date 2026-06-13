@@ -76,7 +76,7 @@ export default function Navbar() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-all font-medium"
             >
               <Languages size={14} />
-              {lang === 'en' ? 'عربي' : 'EN'}
+              {lang === 'en' ? 'FR' : lang === 'fr' ? 'عربي' : 'EN'}
             </button>
 
             {user ? (
@@ -213,7 +213,7 @@ export default function Navbar() {
             </Link>
           )}
           <button onClick={toggleLang} className="w-full text-left px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 font-medium flex items-center gap-2 transition-all">
-            <Languages size={16} /> {lang === 'en' ? 'العربية' : 'English'}
+            <Languages size={16} /> {lang === 'en' ? 'Français' : lang === 'fr' ? 'العربية' : 'English'}
           </button>
           {user ? (
             <button onClick={handleLogout} className="w-full text-left px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 font-medium flex items-center gap-2 transition-all">

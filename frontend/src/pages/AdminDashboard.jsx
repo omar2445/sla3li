@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCat, setNewCat] = useState({ name: '', name_ar: '', icon: '📦', parent_id: null });
+  const [expandedCats, setExpandedCats] = useState({});
   const [filterRole, setFilterRole] = useState('');
   const [filterApproved, setFilterApproved] = useState('');
   const [search, setSearch] = useState('');
@@ -538,13 +539,27 @@ export default function AdminDashboard() {
               <div className="space-y-0">
                 {topLevel.map(p => {
                   const children = subs.filter(s => s.parent_id === p.id);
+                  const expanded = !!expandedCats[p.id];
                   return (
                     <div key={p.id}>
-                      <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                        <span className="flex items-center gap-2"><span>{p.icon}</span><span className="font-medium text-sm">{p.name}</span><span className="text-slate-400 text-xs">/ {p.name_ar}</span></span>
-                        <button onClick={() => deleteCategory(p.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+                      <div
+                        className={`flex items-center justify-between py-2 border-b border-slate-100 ${children.length > 0 ? 'cursor-pointer hover:bg-slate-50 rounded-lg px-1 -mx-1' : ''}`}
+                        onClick={() => children.length > 0 && setExpandedCats(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{p.icon}</span>
+                          <span className="font-medium text-sm">{p.name}</span>
+                          <span className="text-slate-400 text-xs">/ {p.name_ar}</span>
+                          {children.length > 0 && (
+                            <span className="text-xs text-primary-500 bg-primary-50 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                              {children.length}
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-transform ${expanded ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6"/></svg>
+                            </span>
+                          )}
+                        </span>
+                        <button onClick={e => { e.stopPropagation(); deleteCategory(p.id); }} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
                       </div>
-                      {children.map(s => (
+                      {expanded && children.map(s => (
                         <div key={s.id} className="flex items-center justify-between py-1.5 pl-7 border-b border-slate-50 bg-slate-50/50">
                           <span className="flex items-center gap-2 text-slate-500"><span className="text-slate-300 text-xs">└</span><span>{s.icon}</span><span className="text-sm">{s.name}</span><span className="text-slate-400 text-xs">/ {s.name_ar}</span></span>
                           <button onClick={() => deleteCategory(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>

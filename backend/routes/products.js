@@ -52,7 +52,8 @@ router.get('/', async (req, res) => {
   let where = ['p.is_active = 1', 'u.is_approved = 1', 'u.is_active = 1'];
   const params = [];
 
-  if (category) { where.push('p.category_id = ?'); params.push(category); }
+  // A parent category also matches products in its subcategories
+  if (category) { where.push('(p.category_id = ? OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?))'); params.push(category, category); }
   if (search) { where.push('(p.name LIKE ? OR p.name_ar LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.business_name LIKE ?)'); params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`); }
   if (wilaya) { where.push('u.wilaya LIKE ?'); params.push(`%${wilaya}%`); }
   if (min_price) { where.push('p.price >= ?'); params.push(parseFloat(min_price)); }

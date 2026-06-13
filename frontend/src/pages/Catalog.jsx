@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, ShoppingCart, Clock, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, ChevronDown, ShoppingCart, Clock, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -268,10 +268,40 @@ export default function Catalog() {
 
             <div className="mb-5">
               <label className="label text-xs uppercase tracking-wider text-slate-400">{t.category}</label>
-              <select className="input text-sm" value={filters.category} onChange={e => setFilter('category', e.target.value)}>
-                <option value="">{t.allCategories}</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{lang === 'ar' ? c.name_ar : c.name}</option>)}
-              </select>
+              <div className="space-y-0.5 mt-1">
+                <button
+                  onClick={() => setFilter('category', '')}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors ${!filters.category ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                >
+                  {t.allCategories}
+                </button>
+                {categories.filter(c => !c.parent_id).map(c => {
+                  const children = categories.filter(s => s.parent_id === c.id);
+                  const isActive = String(filters.category) === String(c.id);
+                  const childActive = children.some(s => String(filters.category) === String(s.id));
+                  const expanded = isActive || childActive;
+                  return (
+                    <div key={c.id}>
+                      <button
+                        onClick={() => setFilter('category', isActive ? '' : c.id)}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm flex items-center justify-between transition-colors ${isActive ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        <span className="flex items-center gap-1.5"><span>{c.icon}</span>{lang === 'ar' ? c.name_ar : c.name}</span>
+                        {children.length > 0 && <ChevronDown size={13} className={`text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />}
+                      </button>
+                      {expanded && children.map(s => (
+                        <button
+                          key={s.id}
+                          onClick={() => setFilter('category', s.id)}
+                          className={`w-full text-left pl-8 pr-2.5 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-colors ${String(filters.category) === String(s.id) ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                          <span>{s.icon}</span>{lang === 'ar' ? s.name_ar : s.name}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="mb-5">
