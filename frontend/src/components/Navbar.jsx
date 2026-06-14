@@ -87,7 +87,7 @@ export default function Navbar() {
               </button>
               {langOpen && (
                 <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-fade-in">
-                  {[{ code: 'en', label: 'English', flag: '🇬🇧' }, { code: 'fr', label: 'Français', flag: '🇫🇷' }, { code: 'ar', label: 'العربية', flag: '🇩🇿' }].map(l => (
+                  {[{ code: 'en', label: 'English', flag: '🌐' }, { code: 'fr', label: 'Français', flag: '🇫🇷' }, { code: 'ar', label: 'العربية', flag: '🇩🇿' }].map(l => (
                     <button
                       key={l.code}
                       onClick={() => { setLang(l.code); setLangOpen(false); }}
@@ -235,7 +235,7 @@ export default function Navbar() {
             </Link>
           )}
           <div className="px-4 py-2 space-y-1">
-            {[{ code: 'en', label: 'English', flag: '🇬🇧' }, { code: 'fr', label: 'Français', flag: '🇫🇷' }, { code: 'ar', label: 'العربية', flag: '🇩🇿' }].map(l => (
+            {[{ code: 'en', label: 'English', flag: '🌐' }, { code: 'fr', label: 'Français', flag: '🇫🇷' }, { code: 'ar', label: 'العربية', flag: '🇩🇿' }].map(l => (
               <button
                 key={l.code}
                 onClick={() => { setLang(l.code); setMobileOpen(false); }}
