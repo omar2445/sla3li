@@ -105,12 +105,14 @@ export default function Home() {
             <div className="animate-slide-up">
               <div className="inline-flex items-center gap-2 bg-primary-500/15 border border-primary-500/25 rounded-full px-4 py-2 text-sm font-medium mb-8">
                 <span className="w-2 h-2 bg-primary-400 rounded-full animate-pulse-slow" />
-                <span className="text-primary-300">{lang === 'ar' ? 'منصة B2B رائدة في الجزائر' : "Algeria's #1 B2B Marketplace"}</span>
+                <span className="text-primary-300">{lang === 'ar' ? 'منصة B2B رائدة في الجزائر' : lang === 'fr' ? 'La plateforme B2B N°1 en Algérie' : "Algeria's #1 B2B Marketplace"}</span>
               </div>
 
               <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold leading-tight mb-6 text-balance">
                 {lang === 'ar' ? (
                   <>تجارة الجملة <span className="gradient-text">بذكاء وسرعة</span></>
+                ) : lang === 'fr' ? (
+                  <>Le Commerce de Gros <span className="gradient-text">Réinventé</span> pour l'Algérie</>
                 ) : (
                   <>Wholesale Trade <span className="gradient-text">Reimagined</span> for Algeria</>
                 )}

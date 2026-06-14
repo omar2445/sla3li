@@ -27,7 +27,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const profileRef = useRef(null);
+  const langRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -36,7 +38,10 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handler = (e) => { if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false); };
+    const handler = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
+      if (langRef.current && !langRef.current.contains(e.target)) setLangOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
@@ -71,16 +76,29 @@ export default function Navbar() {
 
           {/* Right actions */}
           <div className="hidden md:flex items-center gap-2">
-            <div className="flex items-center bg-white/8 border border-white/10 rounded-xl p-0.5">
-              {[{ code: 'en', label: 'EN' }, { code: 'fr', label: 'FR' }, { code: 'ar', label: 'ع' }].map(l => (
-                <button
-                  key={l.code}
-                  onClick={() => setLang(l.code)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === l.code ? 'bg-primary-500 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
-                >
-                  {l.label}
-                </button>
-              ))}
+            <div className="relative" ref={langRef}>
+              <button
+                onClick={() => setLangOpen(o => !o)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-all font-medium"
+              >
+                <Languages size={14} />
+                {lang === 'en' ? 'EN' : lang === 'fr' ? 'FR' : 'ع'}
+                <ChevronDown size={12} className={`text-white/40 transition-transform duration-200 ${langOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {langOpen && (
+                <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-fade-in">
+                  {[{ code: 'en', label: 'English', flag: '🇬🇧' }, { code: 'fr', label: 'Français', flag: '🇫🇷' }, { code: 'ar', label: 'العربية', flag: '🇩🇿' }].map(l => (
+                    <button
+                      key={l.code}
+                      onClick={() => { setLang(l.code); setLangOpen(false); }}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${lang === l.code ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      <span>{l.flag}</span>
+                      <span>{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {user ? (
@@ -216,19 +234,18 @@ export default function Navbar() {
               {t.dashboard}
             </Link>
           )}
-          <div className="flex items-center gap-2 px-4 py-2">
-            <Languages size={15} className="text-white/40" />
-            <div className="flex items-center bg-white/8 border border-white/10 rounded-xl p-0.5">
-              {[{ code: 'en', label: 'EN' }, { code: 'fr', label: 'FR' }, { code: 'ar', label: 'ع' }].map(l => (
-                <button
-                  key={l.code}
-                  onClick={() => { setLang(l.code); setMobileOpen(false); }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lang === l.code ? 'bg-primary-500 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
-                >
-                  {l.label}
-                </button>
-              ))}
-            </div>
+          <div className="px-4 py-2 space-y-1">
+            {[{ code: 'en', label: 'English', flag: '🇬🇧' }, { code: 'fr', label: 'Français', flag: '🇫🇷' }, { code: 'ar', label: 'العربية', flag: '🇩🇿' }].map(l => (
+              <button
+                key={l.code}
+                onClick={() => { setLang(l.code); setMobileOpen(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${lang === l.code ? 'bg-primary-500/20 text-primary-300' : 'text-white/60 hover:text-white hover:bg-white/8'}`}
+              >
+                <span>{l.flag}</span>
+                <span>{l.label}</span>
+                {lang === l.code && <span className="ml-auto w-2 h-2 rounded-full bg-primary-400" />}
+              </button>
+            ))}
           </div>
           {user ? (
             <button onClick={handleLogout} className="w-full text-left px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 font-medium flex items-center gap-2 transition-all">
