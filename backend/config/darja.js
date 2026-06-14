@@ -119,7 +119,7 @@ const DARJA = [
   { darja: ['robe', 'rob', 'فستان'], terms: ['robe', 'فستان', 'vêtements', 'textile'] },
   { darja: ['fouta', 'serviette', 'فوطة', 'towel'], terms: ['serviette', 'towel', 'فوطة', 'textile', 'bain'] },
   { darja: ['mlaya', 'haik', 'ملاية', 'drap', 'couverture'], terms: ['couverture', 'drap', 'ملاية', 'textile', 'literie'] },
-  { darja: ['chaussures', 'sabat', 'صباط', 'shoes', 'souliers'], terms: ['chaussures', 'shoes', 'صباط', 'sandales', 'basket'] },
+  { darja: ['chaussures', 'sabat', 'sbat', 'sbbat', 'sabbat', 'صباط', 'shoes', 'shoe', 'souliers', '7dha', 'حذاء'], terms: ['chaussures', 'shoes', 'صباط', 'حذاء', 'sandales', 'basket', 'sneakers', 'bottes', 'mocassins'] },
   { darja: ['jilbab', 'djilbab', 'جلباب', 'abaya', 'عباءة'], terms: ['jilbab', 'abaya', 'جلباب', 'vêtements', 'textile'] },
   { darja: ['tchetcha', 'tchatcha', 'bonnet', 'chapeau', 'قبعة'], terms: ['bonnet', 'chapeau', 'قبعة', 'vêtements', 'textile', 'accessoires'] },
   { darja: ['calcone', 'calcoun', 'sous-vêtement', 'lingerie'], terms: ['sous-vêtements', 'lingerie', 'textile', 'vêtements'] },
