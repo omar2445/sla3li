@@ -27,6 +27,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/delivery', require('./routes/delivery'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/suggestions', require('./routes/suggestions'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.2.0', platform: 'Sla3Li', db: db.backendName }));
 

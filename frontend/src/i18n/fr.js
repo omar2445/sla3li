@@ -66,6 +66,12 @@ const fr = {
   chatbotTitle: 'Assistant SELAALI', chatbotSubtitle: 'En ligne · Posez votre question',
   chatbotWelcome: 'Bonjour ! Je suis l\'assistant SELAALI. Comment puis-je vous aider ?',
   chatbotPlaceholder: 'Écrivez un message...', chatbotError: 'Désolé, une erreur est survenue. Veuillez réessayer.',
+  // Suggestions
+  suggestionsTitle: 'Partagez une suggestion', suggestionsSubtitle: 'Aidez-nous à améliorer SELAALI',
+  suggestionName: 'Votre nom (facultatif)', suggestionEmail: 'Votre e-mail (facultatif)',
+  suggestionMessage: 'Votre suggestion ou idée...', suggestionSend: 'Envoyer',
+  suggestionSuccess: 'Merci ! Votre suggestion a bien été reçue.',
+  suggestions: 'Suggestions',
 };
 
 export default fr;

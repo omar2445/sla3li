@@ -163,6 +163,15 @@ const SCHEMA = `
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE(product_id, retailer_id)
   );
+
+  CREATE TABLE IF NOT EXISTS suggestions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    message TEXT NOT NULL,
+    is_read INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
 `;
 
 async function init() {

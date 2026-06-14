@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Users, Package, ShoppingBag, TrendingUp, CheckCircle, XCircle, AlertCircle, Trash2, Plus, FileText, X, ImagePlus, Camera } from 'lucide-react';
+import { Users, Package, ShoppingBag, TrendingUp, CheckCircle, XCircle, AlertCircle, Trash2, Plus, FileText, X, ImagePlus, Camera, MessageSquare } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import api, { imgUrl } from '../api/axios';
 import toast from 'react-hot-toast';
@@ -23,6 +23,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState([]);
   const [newCat, setNewCat] = useState({ name: '', name_ar: '', icon: '📦', parent_id: null });
   const [expandedCats, setExpandedCats] = useState({});
   const [filterRole, setFilterRole] = useState('');
@@ -45,14 +46,15 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const params = { role: filterRole || undefined, is_approved: filterApproved !== '' ? filterApproved : undefined, search: search || undefined };
-      const [s, u, p, o, c] = await Promise.all([
+      const [s, u, p, o, c, sg] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/users', { params }),
         api.get('/admin/products'),
         api.get('/admin/orders'),
         api.get('/categories'),
+        api.get('/suggestions'),
       ]);
-      setStats(s.data); setUsers(u.data.users); setProducts(p.data); setOrders(o.data); setCategories(c.data);
+      setStats(s.data); setUsers(u.data.users); setProducts(p.data); setOrders(o.data); setCategories(c.data); setSuggestions(sg.data);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || t.error;
       toast.error(msg);
@@ -139,12 +141,18 @@ export default function AdminDashboard() {
   const addCategory = async () => { if (!newCat.name || !newCat.name_ar) return; try { await api.post('/categories', newCat); await api.get('/categories').then(r => setCategories(r.data)); setNewCat({ name: '', name_ar: '', icon: '📦', parent_id: null }); toast.success('Category added'); } catch { toast.error(t.error); } };
   const deleteCategory = async (id) => { try { await api.delete(`/categories/${id}`); setCategories(prev => prev.filter(c => c.id !== id)); toast.success('Deleted'); } catch { toast.error(t.error); } };
 
+  const markSuggestionRead = async (id) => { try { await api.patch(`/suggestions/${id}/read`); setSuggestions(prev => prev.map(s => s.id === id ? { ...s, is_read: 1 } : s)); } catch { toast.error(t.error); } };
+  const deleteSuggestion = async (id) => { try { await api.delete(`/suggestions/${id}`); setSuggestions(prev => prev.filter(s => s.id !== id)); toast.success('Deleted'); } catch { toast.error(t.error); } };
+
+  const unreadSuggestions = suggestions.filter(s => !s.is_read).length;
+
   const tabs = [
     { key: 'overview', label: lang === 'ar' ? 'نظرة عامة' : 'Overview' },
     { key: 'users', label: t.users },
     { key: 'products', label: t.products },
     { key: 'orders', label: t.orders },
     { key: 'categories', label: t.categories },
+    { key: 'suggestions', label: t.suggestions, badge: unreadSuggestions },
   ];
 
   return (
@@ -339,7 +347,12 @@ export default function AdminDashboard() {
       </div>
 
       <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-2xl w-fit overflow-x-auto">
-        {tabs.map(tb => <button key={tb.key} onClick={() => setTab(tb.key)} className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${tab === tb.key ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{tb.label}</button>)}
+        {tabs.map(tb => (
+          <button key={tb.key} onClick={() => setTab(tb.key)} className={`relative px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${tab === tb.key ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            {tb.label}
+            {tb.badge > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{tb.badge}</span>}
+          </button>
+        ))}
       </div>
 
       {/* Overview */}
@@ -579,6 +592,49 @@ export default function AdminDashboard() {
           </div>
         );
       })()}
+
+      {/* Suggestions */}
+      {tab === 'suggestions' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">{t.suggestions}</h2>
+              <p className="text-sm text-slate-500">{suggestions.length} total · {unreadSuggestions} unread</p>
+            </div>
+          </div>
+          {suggestions.length === 0 ? (
+            <div className="card p-12 text-center text-slate-400">{t.noData}</div>
+          ) : (
+            <div className="space-y-3">
+              {suggestions.map(s => (
+                <div key={s.id} className={`card p-4 border-l-4 ${s.is_read ? 'border-slate-200' : 'border-primary-400'}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {!s.is_read && <span className="text-xs bg-primary-100 text-primary-700 font-semibold px-2 py-0.5 rounded-full">New</span>}
+                        <span className="text-sm font-semibold text-slate-800">{s.name || (lang === 'ar' ? 'مجهول' : lang === 'fr' ? 'Anonyme' : 'Anonymous')}</span>
+                        {s.email && <span className="text-xs text-slate-400">{s.email}</span>}
+                        <span className="text-xs text-slate-400 ml-auto">{new Date(s.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed">{s.message}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {!s.is_read && (
+                        <button onClick={() => markSuggestionRead(s.id)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Mark as read">
+                          <CheckCircle size={15} />
+                        </button>
+                      )}
+                      <button onClick={() => deleteSuggestion(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
