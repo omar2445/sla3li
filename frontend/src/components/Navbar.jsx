@@ -21,7 +21,7 @@ const Logo = () => (
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { count } = useCart();
-  const { t, lang, toggleLang } = useLang();
+  const { t, lang, toggleLang, setLang } = useLang();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -71,13 +71,17 @@ export default function Navbar() {
 
           {/* Right actions */}
           <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={toggleLang}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-all font-medium"
-            >
-              <Languages size={14} />
-              {lang === 'en' ? 'FR' : lang === 'fr' ? 'عربي' : 'EN'}
-            </button>
+            <div className="flex items-center bg-white/8 border border-white/10 rounded-xl p-0.5">
+              {[{ code: 'en', label: 'EN' }, { code: 'fr', label: 'FR' }, { code: 'ar', label: 'ع' }].map(l => (
+                <button
+                  key={l.code}
+                  onClick={() => setLang(l.code)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === l.code ? 'bg-primary-500 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
 
             {user ? (
               <>
@@ -212,9 +216,20 @@ export default function Navbar() {
               {t.dashboard}
             </Link>
           )}
-          <button onClick={toggleLang} className="w-full text-left px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 font-medium flex items-center gap-2 transition-all">
-            <Languages size={16} /> {lang === 'en' ? 'Français' : lang === 'fr' ? 'العربية' : 'English'}
-          </button>
+          <div className="flex items-center gap-2 px-4 py-2">
+            <Languages size={15} className="text-white/40" />
+            <div className="flex items-center bg-white/8 border border-white/10 rounded-xl p-0.5">
+              {[{ code: 'en', label: 'EN' }, { code: 'fr', label: 'FR' }, { code: 'ar', label: 'ع' }].map(l => (
+                <button
+                  key={l.code}
+                  onClick={() => { setLang(l.code); setMobileOpen(false); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lang === l.code ? 'bg-primary-500 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {user ? (
             <button onClick={handleLogout} className="w-full text-left px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 font-medium flex items-center gap-2 transition-all">
               <LogOut size={16} /> {t.logout}

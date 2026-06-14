@@ -20,7 +20,7 @@ const STATS = [
   { value: '200+', labelEn: 'Active Suppliers', labelAr: 'مورد نشط' },
   { value: '5,000+', labelEn: 'Listed Products', labelAr: 'منتج مدرج' },
   { value: '12,000+', labelEn: 'Orders Placed', labelAr: 'طلب منجز' },
-  { value: '48', labelEn: 'Wilayas Covered', labelAr: 'ولاية مغطاة' },
+  { value: '69', labelEn: 'Wilayas Covered', labelAr: 'ولاية مغطاة' },
 ];
 
 const PARTNERS = [
@@ -75,7 +75,7 @@ function MockupCard() {
               <div key={c} className={`w-5 h-5 ${c} rounded-full border-2 border-navy-800`} />
             ))}
           </div>
-          <p className="text-white/80 text-xs font-medium">48 Wilayas</p>
+          <p className="text-white/80 text-xs font-medium">69 Wilayas</p>
         </div>
       </div>
     </div>
@@ -319,7 +319,7 @@ export default function Home() {
             {
               icon: Globe,
               title: lang === 'ar' ? 'تغطية وطنية' : 'Nationwide Coverage',
-              desc: lang === 'ar' ? 'وصل إلى مئات العملاء عبر 48 ولاية.' : 'Connect with buyers and suppliers across all 48 Algerian wilayas.',
+              desc: lang === 'ar' ? 'وصل إلى مئات العملاء عبر 69 ولاية.' : 'Connect with buyers and suppliers across all 69 Algerian wilayas.',
               accent: 'primary',
               large: false,
             },
