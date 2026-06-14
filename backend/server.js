@@ -29,7 +29,14 @@ app.use('/api/delivery', require('./routes/delivery'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/suggestions', require('./routes/suggestions'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.2.0', platform: 'Sla3Li', db: db.backendName }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.3.0', platform: 'Sla3Li', db: db.backendName }));
+
+// Debug: test Darja expansion — /api/search/expand?q=فرماج
+app.get('/api/search/expand', (req, res) => {
+  const { expandSearch } = require('./config/darja');
+  const { q = '' } = req.query;
+  res.json({ q, expanded: expandSearch(q) });
+});
 
 app.use((err, req, res, next) => {
   console.error('GLOBAL ERROR:', err.stack);
