@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db/database');
 const auth = require('../middleware/auth');
 const { upload, storeFiles } = require('../config/uploads');
+const { expandSearch } = require('../config/darja');
 
 // NOTE: specific routes must come BEFORE /:id routes
 
@@ -10,19 +11,23 @@ const { upload, storeFiles } = require('../config/uploads');
 router.get('/search/suggestions', async (req, res) => {
   const { q } = req.query;
   if (!q || q.trim().length < 2) return res.json([]);
-  const like = `%${q.trim()}%`;
+  const terms = expandSearch(q.trim());
+  const likes = terms.map(t => `%${t}%`);
+  // Build OR clause across all expanded terms
+  const orClause = likes.map(() => '(p.name LIKE ? OR p.name_ar LIKE ? OR c.name LIKE ? OR u.business_name LIKE ?)').join(' OR ');
+  const orParams = likes.flatMap(l => [l, l, l, l]);
   const rows = await db.prepare(`
     SELECT p.id, p.name, p.name_ar, c.name as category_name, c.name_ar as category_name_ar
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
     JOIN users u ON p.wholesaler_id = u.id
     WHERE p.is_active = 1 AND u.is_approved = 1 AND u.is_active = 1
-      AND (p.name LIKE ? OR p.name_ar LIKE ? OR c.name LIKE ? OR u.business_name LIKE ?)
+      AND (${orClause})
     ORDER BY
       CASE WHEN p.name LIKE ? THEN 0 ELSE 1 END,
       p.name
     LIMIT 8
-  `).all(like, like, like, like, `${q.trim()}%`);
+  `).all(...orParams, `${q.trim()}%`);
   res.json(rows);
 });
 
@@ -54,7 +59,12 @@ router.get('/', async (req, res) => {
 
   // A parent category also matches products in its subcategories
   if (category) { where.push('(p.category_id = ? OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?))'); params.push(category, category); }
-  if (search) { where.push('(p.name LIKE ? OR p.name_ar LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.business_name LIKE ?)'); params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`); }
+  if (search) {
+    const searchTerms = expandSearch(search);
+    const searchOr = searchTerms.map(() => '(p.name LIKE ? OR p.name_ar LIKE ? OR p.description LIKE ? OR c.name LIKE ? OR u.business_name LIKE ?)').join(' OR ');
+    where.push(`(${searchOr})`);
+    searchTerms.forEach(t => params.push(`%${t}%`, `%${t}%`, `%${t}%`, `%${t}%`, `%${t}%`));
+  }
   if (wilaya) { where.push('u.wilaya LIKE ?'); params.push(`%${wilaya}%`); }
   if (min_price) { where.push('p.price >= ?'); params.push(parseFloat(min_price)); }
   if (max_price) { where.push('p.price <= ?'); params.push(parseFloat(max_price)); }
