@@ -5,7 +5,7 @@ import logoMark from '../logo/Selaali-LeafBag-mark.svg';
 const QWEN_API_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
 const API_KEY = import.meta.env.VITE_QWEN_API_KEY;
 
-const SYSTEM_PROMPT = `You are a helpful assistant for SELAALI, a B2B marketplace connecting wholesalers, retailers, and delivery drivers in Algeria.
+const BASE_SYSTEM_PROMPT = `You are a helpful assistant for SELAALI, a B2B marketplace connecting wholesalers, retailers, and delivery drivers in Algeria.
 
 You help users with:
 - Finding products and suppliers
@@ -15,6 +15,27 @@ You help users with:
 - Helping with account and dashboard questions
 
 Keep answers short, friendly, and practical. If you don't know something specific about the platform, suggest the user contact support.`;
+
+// Detect language from message content
+function detectLang(text) {
+  if (/[؀-ۿ]/.test(text)) return 'ar'; // Arabic / Darja
+  if (/[àâäéèêëîïôùûüç]/i.test(text)) return 'fr'; // French accents
+  return 'en';
+}
+
+function buildSystemPrompt(userText, appLang) {
+  const detected = detectLang(userText);
+  const langMap = {
+    ar: 'Arabic or Algerian Darja (dialect) — use simple Darja if the user wrote in Darja',
+    fr: 'French',
+    en: 'English',
+  };
+  // Prefer detected language, fall back to app language
+  const replyLang = langMap[detected] || langMap[appLang] || langMap['en'];
+  return `${BASE_SYSTEM_PROMPT}
+
+CRITICAL LANGUAGE RULE: You MUST reply in ${replyLang}. Never switch to another language. If the user writes in Algerian Darja (mixed Arabic/French), reply in Darja. This rule overrides everything else.`;
+}
 
 // Suggestion sets keyed by topic
 const SUGGESTIONS = {
@@ -61,11 +82,11 @@ const SUGGESTIONS = {
 function pickSuggestions(lastReply) {
   if (!lastReply) return SUGGESTIONS.initial;
   const l = lastReply.toLowerCase();
-  if (l.includes('register') || l.includes('sign up') || l.includes('verif') || l.includes('approv')) return SUGGESTIONS.register;
-  if (l.includes('deliver') || l.includes('track') || l.includes('driver') || l.includes('map')) return SUGGESTIONS.delivery;
-  if (l.includes('order') || l.includes('place') || l.includes('cart') || l.includes('checkout')) return SUGGESTIONS.order;
-  if (l.includes('product') || l.includes('catalog') || l.includes('upload') || l.includes('image')) return SUGGESTIONS.product;
-  if (l.includes('password') || l.includes('profile') || l.includes('account') || l.includes('document')) return SUGGESTIONS.account;
+  if (l.includes('register') || l.includes('sign up') || l.includes('verif') || l.includes('approv') || l.includes('inscription') || l.includes('تسجيل') || l.includes('موافقة')) return SUGGESTIONS.register;
+  if (l.includes('deliver') || l.includes('track') || l.includes('driver') || l.includes('map') || l.includes('livraison') || l.includes('توصيل') || l.includes('تتبع')) return SUGGESTIONS.delivery;
+  if (l.includes('order') || l.includes('place') || l.includes('cart') || l.includes('checkout') || l.includes('commande') || l.includes('طلب') || l.includes('سلة')) return SUGGESTIONS.order;
+  if (l.includes('product') || l.includes('catalog') || l.includes('upload') || l.includes('image') || l.includes('produit') || l.includes('منتج') || l.includes('صورة')) return SUGGESTIONS.product;
+  if (l.includes('password') || l.includes('profile') || l.includes('account') || l.includes('document') || l.includes('mot de passe') || l.includes('كلمة المرور') || l.includes('الملف')) return SUGGESTIONS.account;
   return SUGGESTIONS.initial;
 }
 
@@ -109,8 +130,6 @@ export default function Chatbot() {
     setInput('');
     setLoading(true);
 
-    const langInstruction = `Reply ONLY in the same language as this message: "${msg}". Do not use any other language.`;
-
     try {
       const res = await fetch(QWEN_API_URL, {
         method: 'POST',
@@ -118,9 +137,8 @@ export default function Chatbot() {
         body: JSON.stringify({
           model: 'qwen-turbo',
           messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: buildSystemPrompt(msg, lang) },
             ...newMessages,
-            { role: 'system', content: langInstruction },
           ],
         }),
       });
