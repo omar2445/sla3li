@@ -43,7 +43,7 @@ const DARJA = [
 
   // ─── Dairy ──────────────────────────────────────────────────────────────
   { darja: ['l7lib', 'lhleb', 'حليب', 'lait', 'milk'], terms: ['lait', 'milk', 'حليب', 'dairy', 'laitier'] },
-  { darja: ['jben', 'fromage', 'جبن', 'cheese'], terms: ['fromage', 'cheese', 'جبن'] },
+  { darja: ['jben', 'fromage', 'جبن', 'cheese', 'فرماج', 'farmaj', 'formagio', 'chees', 'fromaj'], terms: ['fromage', 'cheese', 'جبن', 'فرماج', 'laitier', 'dairy'] },
   { darja: ['zebda', 'زبدة', 'beurre', 'butter'], terms: ['beurre', 'butter', 'زبدة'] },
   { darja: ['rayeb', 'رايب', 'yaourt', 'yogurt'], terms: ['yaourt', 'yogurt', 'رايب', 'lait fermenté'] },
   { darja: ['lben', 'لبن', 'lait ribot', 'babeurre'], terms: ['lben', 'lait', 'لبن'] },
@@ -119,18 +119,21 @@ const DARJA = [
   { darja: ['robe', 'rob', 'فستان'], terms: ['robe', 'فستان', 'vêtements', 'textile'] },
   { darja: ['fouta', 'serviette', 'فوطة', 'towel'], terms: ['serviette', 'towel', 'فوطة', 'textile', 'bain'] },
   { darja: ['mlaya', 'haik', 'ملاية', 'drap', 'couverture'], terms: ['couverture', 'drap', 'ملاية', 'textile', 'literie'] },
-  { darja: ['chaussures', 'sabat', 'sbat', 'sbbat', 'sabbat', 'صباط', 'shoes', 'shoe', 'souliers', '7dha', 'حذاء'], terms: ['chaussures', 'shoes', 'صباط', 'حذاء', 'sandales', 'basket', 'sneakers', 'bottes', 'mocassins'] },
+  { darja: ['chaussures', 'sabat', 'sbat', 'sbbat', 'sabbat', 'صباط', 'shoes', 'shoe', 'souliers', '7dha', 'حذاء', 'أحذية', 'a7dhiya', 'soulier', 'boot', 'basket'], terms: ['chaussures', 'shoes', 'صباط', 'حذاء', 'أحذية', 'sandales', 'basket', 'sneakers', 'bottes', 'mocassins', 'footwear'] },
   { darja: ['jilbab', 'djilbab', 'جلباب', 'abaya', 'عباءة'], terms: ['jilbab', 'abaya', 'جلباب', 'vêtements', 'textile'] },
   { darja: ['tchetcha', 'tchatcha', 'bonnet', 'chapeau', 'قبعة'], terms: ['bonnet', 'chapeau', 'قبعة', 'vêtements', 'textile', 'accessoires'] },
   { darja: ['calcone', 'calcoun', 'sous-vêtement', 'lingerie'], terms: ['sous-vêtements', 'lingerie', 'textile', 'vêtements'] },
   { darja: ['chaussettes', 'jwareb', 'جوارب', 'socks'], terms: ['chaussettes', 'socks', 'جوارب', 'textile'] },
 ];
 
-// Build a fast lookup: normalize input → list of extra terms to search
+// Normalize: lowercase + Unicode NFC so Arabic text from browser matches dictionary keys
+const norm = (s) => s.normalize('NFC').toLowerCase().trim();
+
+// Build a fast lookup: normalized darja word → extra search terms
 const index = new Map();
 for (const entry of DARJA) {
   for (const word of entry.darja) {
-    index.set(word.toLowerCase().trim(), entry.terms);
+    index.set(norm(word), entry.terms);
   }
 }
 
@@ -140,19 +143,21 @@ for (const entry of DARJA) {
  */
 function expandSearch(raw) {
   if (!raw) return [];
-  const normalized = raw.toLowerCase().trim();
+  const normalized = norm(raw);
   const terms = new Set([normalized]);
 
-  // Check the whole phrase
-  if (index.has(normalized)) {
-    for (const t of index.get(normalized)) terms.add(t.toLowerCase());
-  }
-
-  // Check individual words in the phrase
-  for (const word of normalized.split(/\s+/)) {
-    if (index.has(word)) {
-      for (const t of index.get(word)) terms.add(t.toLowerCase());
+  const addTerms = (key) => {
+    if (index.has(key)) {
+      for (const t of index.get(key)) terms.add(norm(t));
     }
+  };
+
+  // Check the whole phrase
+  addTerms(normalized);
+
+  // Check each individual word
+  for (const word of normalized.split(/\s+/)) {
+    addTerms(word);
   }
 
   return [...terms];
