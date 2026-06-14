@@ -90,6 +90,40 @@ const DARJA = [
   { darja: ['kisan', 'kizan', 'كيسان', 'verres', 'glasses'], terms: ['verres', 'cups', 'كوب', 'gobelets', 'emballage'] },
   { darja: ['plastic', 'blastik', 'بلاستيك'], terms: ['plastique', 'emballage', 'sac', 'كيس'] },
   { darja: ['karto', 'carton', 'كرتون'], terms: ['carton', 'emballage', 'boîte', 'كرتون'] },
+
+  // ─── Pastry & street food ────────────────────────────────────────────────
+  { darja: ['brick', 'brik', 'بريك', 'bricks', 'briks'], terms: ['brick', 'بريك', 'feuille de brick', 'pâte à brick', 'pastilla', 'feuille', 'pâtisserie'] },
+  { darja: ['mlokhiya', 'mloukhia', 'ملوخية'], terms: ['ملوخية', 'mloukhia', 'légumes secs'] },
+  { darja: ['bourek', 'bourak', 'بوراك', 'boreks'], terms: ['brick', 'بريك', 'feuille', 'pâte', 'farci'] },
+  { darja: ['makroud', 'مقروض'], terms: ['makroud', 'مقروض', 'pâtisserie', 'حلويات', 'gâteau'] },
+  { darja: ['chrik', 'chrika', 'شريك'], terms: ['pâtisserie', 'gâteau', 'حلويات', 'brioche'] },
+  { darja: ['tamr', 'tmar', 'تمر', 'dattes'], terms: ['dattes', 'dates', 'تمر'] },
+
+  // ─── Stationery & school supplies ───────────────────────────────────────
+  { darja: ['stylo', 'stilo', 'ستيلو', 'قلم'], terms: ['stylo', 'pen', 'قلم', 'stylos', 'papeterie', 'stationery', 'bille', 'encre'] },
+  { darja: ['pensil', 'pencil', 'qalam', 'crayon', 'قلم رصاص'], terms: ['crayon', 'pencil', 'قلم', 'papeterie', 'stationery', 'رصاص'] },
+  { darja: ['papeterie', 'paptriya', 'fournitures', 'لوازم مدرسية'], terms: ['papeterie', 'stationery', 'fournitures scolaires', 'لوازم مدرسية', 'bureau'] },
+  { darja: ['classeur', 'cahier', 'دفتر', 'dfater'], terms: ['cahier', 'classeur', 'دفتر', 'papeterie', 'scolaire'] },
+  { darja: ['gomme', 'goma', 'ممحاة', 'eraser'], terms: ['gomme', 'eraser', 'ممحاة', 'papeterie'] },
+  { darja: ['rgle', 'règle', 'مسطرة', 'ruler'], terms: ['règle', 'ruler', 'مسطرة', 'papeterie'] },
+  { darja: ['colle', 'col', 'صمغ', 'glue'], terms: ['colle', 'glue', 'صمغ', 'papeterie', 'adhésif'] },
+  { darja: ['ciseaux', 'sizo', 'مقص', 'scissors'], terms: ['ciseaux', 'scissors', 'مقص', 'papeterie'] },
+  { darja: ['scotch', 'ruban', 'شريط لاصق'], terms: ['scotch', 'ruban adhésif', 'شريط', 'papeterie', 'emballage'] },
+  { darja: ['imprimante', 'toner', 'طابعة', 'printer'], terms: ['imprimante', 'printer', 'طابعة', 'toner', 'cartouche', 'bureau'] },
+
+  // ─── Clothing & textiles ─────────────────────────────────────────────────
+  { darja: ['seroual', 'sarwal', 'serwal', 'سروال', 'panse', 'pantalon', 'pants'], terms: ['pantalon', 'pants', 'trousers', 'سروال', 'vêtements', 'clothing', 'textile'] },
+  { darja: ['kamija', 'qamis', 'قميص', 'chemise', 'shirt'], terms: ['chemise', 'shirt', 'قميص', 'vêtements', 'textile'] },
+  { darja: ['trikot', 'tricot', 'pull', 'chandail', 'تريكو'], terms: ['pull', 'tricot', 'تريكو', 'vêtements', 'textile'] },
+  { darja: ['jaka', 'djaka', 'veste', 'jacket', 'جاكيت'], terms: ['veste', 'jacket', 'جاكيت', 'vêtements', 'manteau'] },
+  { darja: ['robe', 'rob', 'فستان'], terms: ['robe', 'فستان', 'vêtements', 'textile'] },
+  { darja: ['fouta', 'serviette', 'فوطة', 'towel'], terms: ['serviette', 'towel', 'فوطة', 'textile', 'bain'] },
+  { darja: ['mlaya', 'haik', 'ملاية', 'drap', 'couverture'], terms: ['couverture', 'drap', 'ملاية', 'textile', 'literie'] },
+  { darja: ['chaussures', 'sabat', 'صباط', 'shoes', 'souliers'], terms: ['chaussures', 'shoes', 'صباط', 'sandales', 'basket'] },
+  { darja: ['jilbab', 'djilbab', 'جلباب', 'abaya', 'عباءة'], terms: ['jilbab', 'abaya', 'جلباب', 'vêtements', 'textile'] },
+  { darja: ['tchetcha', 'tchatcha', 'bonnet', 'chapeau', 'قبعة'], terms: ['bonnet', 'chapeau', 'قبعة', 'vêtements', 'textile', 'accessoires'] },
+  { darja: ['calcone', 'calcoun', 'sous-vêtement', 'lingerie'], terms: ['sous-vêtements', 'lingerie', 'textile', 'vêtements'] },
+  { darja: ['chaussettes', 'jwareb', 'جوارب', 'socks'], terms: ['chaussettes', 'socks', 'جوارب', 'textile'] },
 ];
 
 // Build a fast lookup: normalize input → list of extra terms to search
